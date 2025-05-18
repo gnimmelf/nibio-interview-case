@@ -30,13 +30,12 @@ const server = Bun.serve({
   websocket
 });
 
-const topic = 'anonymous-chat-room';
-const messages: Message[] = [{
-  id: 1,
-  date: new Date().toISOString(),
-  userId: 'yyy',
-  text: 'zzz'
-}];
+const topics = {
+  chatRoom: 'chat-room',
+  playerMove: 'player-move'
+};
+
+const messages: Message[] = [];
 
 const messagesRoute = app
   .get('/', (c) => c.text('Hono!'))
@@ -45,13 +44,13 @@ const messagesRoute = app
   })
   .post(
     '/messages',
-    vValidator('form', MessageFormSchema, (result, c) => {
+    vValidator('json', MessageFormSchema, (result, c) => {
       if (!result.success) {
         return c.json({ ok: false }, 400);
       }
     }),
     async (c) => {
-      const param = c.req.valid('form');
+      const param = c.req.valid('json');
       const currentDateTime = new Date();
       const message: Message = {
         id: Number(currentDateTime),
@@ -64,29 +63,31 @@ const messagesRoute = app
       };
 
       messages.push(message);
-      server.publish(topic, JSON.stringify(data));
+      server.publish(topics.chatRoom, JSON.stringify(data));
 
       return c.json({ ok: true });
     }
   )
 
-  app.get(
-    '/ws',
-    upgradeWebSocket((_) => ({
-      onOpen(_, ws) {
-        const rawWs = ws.raw as ServerWebSocket;
-        rawWs.subscribe(topic);
-        console.log(`WebSocket server opened and subscribed to topic '${topic}'`);
-      },
-      onClose(_, ws) {
-        const rawWs = ws.raw as ServerWebSocket;
-        rawWs.unsubscribe(topic);
-        console.log(
-          `WebSocket server closed and unsubscribed from topic '${topic}'`
-        );
-      },
-    }))
-  );
+app.get(
+  '/ws',
+  upgradeWebSocket((_) => ({
+    onOpen(_, ws) {
+      const rawWs = ws.raw as ServerWebSocket;
+      rawWs.subscribe(topics.chatRoom);
+      rawWs.subscribe(topics.playerMove);
+      console.log(`WebSocket server opened and subscribed to topics`);
+    },
+    onClose(_, ws) {
+      const rawWs = ws.raw as ServerWebSocket;
+      rawWs.unsubscribe(topics.chatRoom);
+      rawWs.subscribe(topics.playerMove);
+      console.log(
+        `WebSocket server closed and unsubscribed from topics`
+      );
+    },
+  }))
+);
 
 export default app;
 export type AppType = typeof messagesRoute;
