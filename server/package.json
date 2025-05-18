@@ -1,0 +1,19 @@
+{
+  "name": "server",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/ws": "^8.18.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@hono/valibot-validator": "^0.5.2",
+    "dotenv": "^16.5.0",
+    "hono": "^4.7.9",
+    "valibot": "^1.1.0"
+  }
+}

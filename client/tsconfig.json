@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx", // Enable React JSX transformation
+    "jsxImportSource": "react", // Explicitly set React as JSX source
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true,
+    "types": [
+      // Add Vite client & test types for better dev
+      "vite/client",
+      "vitest/globals",
+      "@testing-library/jest-dom",
+    ],
+    "isolatedModules": true,
+    "paths": {
+      "~/*": ["./src/*"],
+      "styled-system/*": ["./styled-system/*"],
+    },
+  },
+  "include": ["src", "styled-system", "setupTests.ts"],
+}
