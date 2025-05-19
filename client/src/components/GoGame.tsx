@@ -1,21 +1,28 @@
+import { useEffect, useState } from "react";
 import * as v from "valibot";
 import { css } from "styled-system/css";
-import { useTheme } from "./ThemeProvider";
 
-import { publishActions } from "../../shared/constants";
+import { messageTypes } from "../../shared/constants";
 import {
+  ChatMessage,
+  ChatMessageSchema,
   Message,
-  MessageFormSchema,
-  MessageFormValues,
-  DataToSend,
 } from "../../shared/types";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { Input } from "./Input";
-import { Button } from "./Button";
+import { Chat } from "./Chat";
 
 const styles = {
-  container: css({
-    padding: "{2}",
+  splitGridH: css({
+    display: "grid",
+    gridTemplateColumns: "1fr auto",
+    height: "full",
+    "& > :last-child": {
+      width: "sm",
+      overflowY: "auto",
+    },
+    "& > *": {
+      minHeight: 0,
+      height: "full",
+    },
   }),
 };
 
@@ -26,37 +33,30 @@ const config = {
   BACKEND_PORT: process.env.BACKEND_URL!.split(":")[2],
 };
 
-console.log({ config });
-
-const initialValues: MessageFormValues = {
-  userId: Math.random().toString(36).slice(-8),
-  text: "Test message",
-};
-
 export const GoGame: React.FC<{}> = ({}) => {
-  const theme = useTheme();
+  const [userId, setUserId] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [formValues, setFormValues] =
-    useState<MessageFormValues>(initialValues);
-  const [formErrors, setFormErrors] = useState<
-    v.ValiError<typeof MessageFormSchema>[]
-  >([]);
-
+  /**
+   * Load messages
+   */
   useEffect(() => {
-    const fetchMessages = async () => {
-      const response = await fetch(`${config.BACKEND_URL}/messages`);
+    const fetchChatHistory = async () => {
+      const response = await fetch(`${config.BACKEND_URL}/chat`);
       if (!response.ok) {
         console.error("Failed to fetch messages");
         return;
       }
-      const messages: Message[] = await response.json();
-      setMessages(messages);
+      const chatMessages: ChatMessage[] = await response.json();
+      setChatMessages(chatMessages);
     };
 
-    fetchMessages();
-  }, []);
+    fetchChatHistory();
+  }, [userId]);
 
+  /**
+   * Connect Websocket
+   */
   useEffect(() => {
     const socket = new WebSocket(`${config.BACKEND_WS_URL}/ws`);
 
@@ -66,19 +66,23 @@ export const GoGame: React.FC<{}> = ({}) => {
 
     socket.onmessage = (event) => {
       try {
-        const data: DataToSend = JSON.parse(event.data.toString());
-        switch (data.action) {
-          case publishActions.UPDATE_CHAT:
-            setMessages((prev) => [...prev, data.message]);
+        const message: Message = JSON.parse(event.data.toString());
+
+        switch (message.type) {
+          case messageTypes.UPDATE_CHAT:
+            setChatMessages((prev) => [...prev, message.content]);
             break;
-          case publishActions.PLAYER_MOVE:
+          case messageTypes.PLAYER_MOVE:
             // TODO! Update player move
             break;
+          case messageTypes.CONNECTED:
+            setUserId(message.content.id)
+            break;
           default:
-            console.error("Unknown data:", data);
+            console.error("Unknown data:", message);
         }
       } catch (_) {
-        console.log("Message from server:", event.data);
+        console.log("ChatMessage from server:", event.data);
       }
     };
 
@@ -91,21 +95,13 @@ export const GoGame: React.FC<{}> = ({}) => {
     };
   }, []);
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormValues((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const postChatMessage = async (messageValues: ChatMessage) => {
     try {
-      const validatedValues = v.parse(MessageFormSchema, formValues);
-      const response = await fetch(`${config.BACKEND_URL}/messages`, {
+      const validatedValues = v.parse(ChatMessageSchema, messageValues);
+
+      const response = await fetch(`${config.BACKEND_URL}/chat`, {
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         method: "POST",
         body: JSON.stringify(validatedValues),
@@ -113,34 +109,22 @@ export const GoGame: React.FC<{}> = ({}) => {
       if (!response.ok) {
         throw new Error("Failed to send message");
       }
-      setFormValues(initialValues);
-      setFormErrors([]);
     } catch (error) {
-      if (error instanceof v.ValiError) {
-        console.error("Form validation errors:", error.issues);
-        setFormErrors(error.issues);
-      } else {
-        console.error("Error:", error);
-      }
+      console.error("Error:", error);
+      return false;
     }
+    return true;
   };
 
   return (
-    <section className={styles.container}>
-      {JSON.stringify(messages)}
-      <form
-        method="post"
-        onSubmit={handleSubmit}
-        className="flex items-center space-x-2"
-      >
-        <Input name="userId" defaultValue={formValues.userId} hidden />
-        <Input
-          name="text"
-          value={formValues.text}
-          onChange={handleInputChange}
-        />
-        <Button type="submit">Send</Button>
-      </form>
+    <section>
+      <h2>User id: {userId}</h2>
+      <div className={styles.splitGridH}>
+        <div>Board</div>
+        <div>
+          <Chat userId={userId} messages={chatMessages} postMessage={postChatMessage} />
+        </div>
+      </div>
     </section>
   );
 };

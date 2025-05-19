@@ -1,0 +1,1 @@
+export const dir = (arg: any, depth = null) => console.dir(arg, {depth})
