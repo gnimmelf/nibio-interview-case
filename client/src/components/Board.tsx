@@ -68,7 +68,7 @@ export const GoGame: React.FC<{}> = ({}) => {
       try {
         const data: MessageData = JSON.parse(event.data.toString());
         switch (data.type) {
-          case messageTypes.UPDATE_CHAT:
+          case messageTypes.CHAT_UPDATE:
             setMessages((prev) => [...prev, data.message]);
             break;
           case messageTypes.PLAYER_MOVE:

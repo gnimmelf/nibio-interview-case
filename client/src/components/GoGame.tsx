@@ -3,21 +3,21 @@ import * as v from "valibot";
 import { css } from "styled-system/css";
 
 import { messageTypes } from "../../shared/constants";
-import { ChatMessage, ChatMessageSchema, Message } from "../../shared/types";
+import { ChatMessage, ChatMessageSchema, ConnectionId, ConnectionsMessage, Message } from "../../shared/types";
 import { Chat } from "./Chat";
 
 const styles = {
   splitGridH: css({
     display: "grid",
     gridTemplateColumns: {
-      base: "1fr",       // Stack vertically on base (mobile)
-      sm: "1fr auto",    // Horizontal split on sm and up
+      base: "1fr", // Stack vertically on base (mobile)
+      sm: "1fr auto", // Horizontal split on sm and up
     },
     height: "full",
     "& > :last-child": {
       width: {
-        base: "full",    // Full width on small screens
-        sm: "sm",        // Fixed width on larger screens
+        base: "full", // Full width on small screens
+        sm: "sm", // Fixed width on larger screens
       },
       overflowY: "auto",
     },
@@ -37,7 +37,9 @@ const config = {
 
 export const GoGame: React.FC<{}> = ({}) => {
   const [userId, setUserId] = useState("");
+  const [userTitle, setUserTitle] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [connectionIds, setConnectionIds] = useState<ConnectionId[]>([]);
 
   /**
    * Load messages
@@ -69,9 +71,8 @@ export const GoGame: React.FC<{}> = ({}) => {
     socket.onmessage = (event) => {
       try {
         const message: Message = JSON.parse(event.data.toString());
-
         switch (message.type) {
-          case messageTypes.UPDATE_CHAT:
+          case messageTypes.CHAT_UPDATE:
             setChatMessages((prev) => [...prev, message.content]);
             break;
           case messageTypes.PLAYER_MOVE:
@@ -80,6 +81,10 @@ export const GoGame: React.FC<{}> = ({}) => {
           case messageTypes.CONNECTED:
             setUserId(message.content.userId);
             break;
+          case messageTypes.CONNECTIONS_UPDATE:
+            setConnectionIds(message.content.connectionIds);
+            break;
+
           default:
             console.error("Unknown data:", message);
         }
@@ -96,6 +101,21 @@ export const GoGame: React.FC<{}> = ({}) => {
       socket.close();
     };
   }, []);
+
+  /**
+   * Set connection title
+   */
+  useEffect(() => {
+    const userIdx = connectionIds.indexOf(userId)
+    let title
+    if (userIdx < 2) {
+      title = `Player ${userIdx+1}`
+    }
+    else {
+      title = `Spectator ${userIdx-1}`
+    }
+    setUserTitle(title)
+  }, [connectionIds])
 
   const postChatMessage = async (messageValues: ChatMessage) => {
     try {
@@ -121,7 +141,10 @@ export const GoGame: React.FC<{}> = ({}) => {
   return (
     <section className={css({ height: "full" })}>
       <div className={styles.splitGridH}>
-        <div>Board - User id: {userId}</div>
+        <div>
+        <div>Board ({connectionIds.length} connections) - You are {userTitle}</div>
+        <span>{JSON.stringify({ userId, connectionIds })}</span>
+        </div>
         <div>
           <Chat
             userId={userId}

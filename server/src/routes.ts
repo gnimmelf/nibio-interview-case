@@ -8,23 +8,18 @@ import {
   type ChatMessageType,
   type ChatMessage,
   type ConnectedMessageType,
-  ChatMessageSchema
+  ChatMessageSchema,
+  type ConnectionsMessageType
 } from '../shared/types';
 import { messageTypes } from '../shared/constants';
 
 const topics = {
-  chatRoom: 'chat-room',
-  playerMove: 'player-move'
+  gameRoom: 'game-room',
 };
 
-/**
- * Registries
- */
-let chatHistory: ChatMessage[] = [];
-let connectionIds: string[] = []
-
+type WsId = string;
 interface WsData {
-  wsId: string;
+  wsId: WsId
   userId: string
 }
 
@@ -32,8 +27,41 @@ const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<WsDat
 
 export { websocket };
 
-export const setRoutes = (server: Bun.Server, app: Hono) => {
+/**
+ * Registries
+ */
+let chatHistory: ChatMessage[] = [];
+let connectionIds: string[] = []
 
+/**
+ * Update connections pool
+ * @param ws Hono WebSocket Context
+ * @param options.add ConnectionId to add - optional
+ * @param options.remove ConnectionId to remove - optional
+ */
+function updateConnectionPool(server: Bun.Server, options: {
+  add?: WsId
+  remove?: WsId
+}) {
+  console.assert(options?.add || options?.remove, 'updateConnectionPool missing options', options)
+  if (options?.add) {
+    connectionIds.push(options.add)
+  }
+  if (options?.remove) {
+    connectionIds = connectionIds.filter((userId) => userId != options?.remove)
+  }
+  const message: ConnectionsMessageType = {
+    type: messageTypes.CONNECTIONS_UPDATE,
+    content: {
+      connectionIds: connectionIds,
+    },
+  };
+  server.publish(topics.gameRoom, JSON.stringify(message));
+
+  console.log(`WebSocket connection pool ${options?.add ? 'add' : 'remove'} update sent`);
+}
+
+export const setRoutes = (server: Bun.Server, app: Hono, settings: Record<string, any>) => {
   app.get(
     '/chat',
     (c) => {
@@ -50,14 +78,14 @@ export const setRoutes = (server: Bun.Server, app: Hono) => {
         const param = c.req.valid('json');
 
         const message: ChatMessageType = {
-          type: messageTypes.UPDATE_CHAT,
+          type: messageTypes.CHAT_UPDATE,
           content: {
             ...param,
           },
         };
 
         chatHistory.push(message.content);
-        server.publish(topics.chatRoom, JSON.stringify(message));
+        server.publish(topics.gameRoom, JSON.stringify(message));
 
         return c.json({ ok: true });
       }
@@ -69,33 +97,39 @@ export const setRoutes = (server: Bun.Server, app: Hono) => {
       return {
         onOpen(_, ws) {
           const rawWs = ws.raw!;
-          // Assign unique ID to this connection
-          const wsId = randomUUID();
+          // Assign a unique ID to this connection
+          const wsId = randomUUID() as string;
           rawWs.data.wsId = wsId;
 
-          rawWs.subscribe(topics.chatRoom);
-          rawWs.subscribe(topics.playerMove);
+          // Update subscriptions
+          rawWs.subscribe(topics.gameRoom);
 
-          const message: ConnectedMessageType = {
+          // Connect user
+          const connectedMessage: ConnectedMessageType = {
             type: messageTypes.CONNECTED,
-            content: { userId: wsId },
+            content: {
+              userId: wsId,
+            },
           };
-          ws.send(JSON.stringify(message));
-
+          ws.send(JSON.stringify(connectedMessage));
           console.log(`WebSocket ${rawWs.data.wsId} opened and subscribed to topics`);
+
+          // Update connectionIds
+          updateConnectionPool(server, { add: wsId })
         },
         onClose(_, ws) {
           const rawWs = ws.raw!;
           const wsId = rawWs.data.wsId;
-          rawWs.unsubscribe(topics.chatRoom);
-          rawWs.subscribe(topics.playerMove);
 
-          // TODO! Make a better solution for the registries
-          chatHistory = chatHistory.filter(({ userId }) => userId != wsId);
+          // Update subscriptions
+          rawWs.unsubscribe(topics.gameRoom);
 
           console.log(
             `WebSocket ${rawWs.data?.wsId} closed and unsubscribed from topics`
           );
+
+          // Update connectionIds
+          updateConnectionPool(server, { remove: wsId })
         },
       }
     })

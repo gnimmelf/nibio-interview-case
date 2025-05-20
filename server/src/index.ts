@@ -6,7 +6,7 @@ import { setRoutes, websocket } from './routes'
 
 dotenv.config({ path: '../.env' })
 
-const config = {
+const settings = {
   FRONTEND_URL: process.env.FRONTEND_URL!,
   BACKEND_URL: process.env.BACKEND_URL!,
   BACKEND_WS_URL: process.env.BACKEND_WS_URL!,
@@ -18,13 +18,13 @@ const config = {
  */
 const app = new Hono();
 
-app.use('*', cors({ origin: config.FRONTEND_URL }));
+app.use('*', cors({ origin: settings.FRONTEND_URL }));
 app.get('/', (c) => c.text('Hono!'))
 
 const server = Bun.serve({
   fetch: app.fetch,
-  port: parseInt(config.BACKEND_PORT!),
+  port: parseInt(settings.BACKEND_PORT!),
   websocket
 });
 
-setRoutes(server, app, config)
+setRoutes(server, app, settings)

@@ -61,7 +61,7 @@ export const Chat: React.FC<{
 
   return (
     <section className={styles.splitGridV}>
-      <div class={styles.chatContainer}>
+      <div className={styles.chatContainer}>
         {messages.map((message) => (
           <div key={message.userId} data-user-id={message.userId}>
             <ChatBubble text={message.text} isFromMe={message.userId == userId} />
