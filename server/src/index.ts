@@ -11,7 +11,10 @@ const settings = {
   BACKEND_URL: process.env.BACKEND_URL!,
   BACKEND_WS_URL: process.env.BACKEND_WS_URL!,
   BACKEND_PORT: process.env.BACKEND_URL!.split(':')[2],
+  SECRET_KEY: 'super-secret-key'
 }
+
+export type ServerSettings = typeof settings
 
 /**
  * Instantiate app, start server

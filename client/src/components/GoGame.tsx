@@ -3,7 +3,13 @@ import * as v from "valibot";
 import { css } from "styled-system/css";
 
 import { messageTypes } from "../../shared/constants";
-import { ChatMessage, ChatMessageSchema, ConnectionId, ConnectionsMessage, Message } from "../../shared/types";
+import {
+  ChatMessage,
+  ChatMessageSchema,
+  ConnectedMessage,
+  ConnectionId,
+  Message,
+} from "../../shared/types";
 import { Chat } from "./Chat";
 
 const styles = {
@@ -36,7 +42,7 @@ const config = {
 };
 
 export const GoGame: React.FC<{}> = ({}) => {
-  const [userId, setUserId] = useState("");
+  const [userData, setUserData] = useState<ConnectedMessage>();
   const [userTitle, setUserTitle] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [connectionIds, setConnectionIds] = useState<ConnectionId[]>([]);
@@ -56,7 +62,7 @@ export const GoGame: React.FC<{}> = ({}) => {
     };
 
     fetchChatHistory();
-  }, [userId]);
+  }, [userData]);
 
   /**
    * Connect Websocket
@@ -72,19 +78,18 @@ export const GoGame: React.FC<{}> = ({}) => {
       try {
         const message: Message = JSON.parse(event.data.toString());
         switch (message.type) {
+          case messageTypes.CONNECTED:
+            setUserData(message.content);
+            break;
+          case messageTypes.CONNECTIONS_UPDATE:
+            setConnectionIds(message.content.connectionIds);
+            break;
           case messageTypes.CHAT_UPDATE:
             setChatMessages((prev) => [...prev, message.content]);
             break;
           case messageTypes.PLAYER_MOVE:
             // TODO! Update player move
             break;
-          case messageTypes.CONNECTED:
-            setUserId(message.content.userId);
-            break;
-          case messageTypes.CONNECTIONS_UPDATE:
-            setConnectionIds(message.content.connectionIds);
-            break;
-
           default:
             console.error("Unknown data:", message);
         }
@@ -104,18 +109,18 @@ export const GoGame: React.FC<{}> = ({}) => {
 
   /**
    * Set connection title
+   * TODO! Move to game context alsng with other props, `isPlayer`, `userData` that are gamewide
    */
   useEffect(() => {
-    const userIdx = connectionIds.indexOf(userId)
-    let title
+    const userIdx = connectionIds.indexOf(userData?.userId!);
+    let title;
     if (userIdx < 2) {
-      title = `Player ${userIdx+1}`
+      title = `Player ${userIdx + 1}`;
+    } else {
+      title = `Spectator ${userIdx - 1}`;
     }
-    else {
-      title = `Spectator ${userIdx-1}`
-    }
-    setUserTitle(title)
-  }, [connectionIds])
+    setUserTitle(title);
+  }, [connectionIds]);
 
   const postChatMessage = async (messageValues: ChatMessage) => {
     try {
@@ -124,6 +129,7 @@ export const GoGame: React.FC<{}> = ({}) => {
       const response = await fetch(`${config.BACKEND_URL}/chat`, {
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${userData!.token}`,
         },
         method: "POST",
         body: JSON.stringify(validatedValues),
@@ -141,17 +147,23 @@ export const GoGame: React.FC<{}> = ({}) => {
   return (
     <section className={css({ height: "full" })}>
       <div className={styles.splitGridH}>
-        <div>
-        <div>Board ({connectionIds.length} connections) - You are {userTitle}</div>
-        <span>{JSON.stringify({ userId, connectionIds })}</span>
-        </div>
-        <div>
-          <Chat
-            userId={userId}
-            messages={chatMessages}
-            postMessage={postChatMessage}
-          />
-        </div>
+        {userData && (
+          <>
+            <div style={{maxWidth: '300px', overflowX: 'scroll'}}>
+              <div>
+                Board ({connectionIds.length} connections) - You are {userTitle}
+              </div>
+              <pre>{JSON.stringify({ userData, connectionIds }, null, 2)}</pre>
+            </div>
+            <div>
+              <Chat
+                userId={userData?.userId!}
+                messages={chatMessages}
+                postMessage={postChatMessage}
+              />
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

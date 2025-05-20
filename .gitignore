@@ -2,6 +2,7 @@
 
 
 # misc
+__snippets
 *.pdf
 .DS_Store
 .env

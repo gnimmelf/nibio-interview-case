@@ -12,6 +12,7 @@ export type ChatMessage = v.InferInput<typeof ChatMessageSchema>;
 // Connected
 export type ConnectedMessage = {
   userId: string
+  token: string
 }
 
 // Move

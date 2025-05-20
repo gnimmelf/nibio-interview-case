@@ -4,6 +4,7 @@ import { vValidator } from '@hono/valibot-validator';
 import { createBunWebSocket } from 'hono/bun';
 import type { ServerWebSocket } from 'bun';
 
+import { createWsIdToken, dir, validateAuthHeader, verifyWsIdToken } from './utils';
 import {
   type ChatMessageType,
   type ChatMessage,
@@ -12,17 +13,21 @@ import {
   type ConnectionsMessageType
 } from '../shared/types';
 import { messageTypes } from '../shared/constants';
+import type { ServerSettings } from '.';
 
 const topics = {
   gameRoom: 'game-room',
 };
 
+// Websocket type defs
 type WsId = string;
 interface WsData {
   wsId: WsId
-  userId: string
+  token: string
 }
+type WsInstance = ServerWebSocket<WsData>
 
+// TODO! Hoist this and pass in dependency injection
 const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket<WsData>>();
 
 export { websocket };
@@ -31,37 +36,43 @@ export { websocket };
  * Registries
  */
 let chatHistory: ChatMessage[] = [];
-let connectionIds: string[] = []
+let activeConnections: WsInstance[] = []
 
 /**
- * Update connections pool
- * @param ws Hono WebSocket Context
- * @param options.add ConnectionId to add - optional
- * @param options.remove ConnectionId to remove - optional
+ * Update active connections
+ * @param ws Hono WebSocket
+ * @param options.add Connection to add - optional
+ * @param options.remove Connection to remove - optional
  */
-function updateConnectionPool(server: Bun.Server, options: {
-  add?: WsId
-  remove?: WsId
+
+function updateActiveConnections(server: Bun.Server, options: {
+  add?: WsInstance
+  remove?: WsInstance
 }) {
-  console.assert(options?.add || options?.remove, 'updateConnectionPool missing options', options)
+  console.assert(options?.add || options?.remove, 'updateActiveConnections missing options', options)
+
   if (options?.add) {
-    connectionIds.push(options.add)
+    activeConnections.push(options.add)
   }
+
   if (options?.remove) {
-    connectionIds = connectionIds.filter((userId) => userId != options?.remove)
+    activeConnections = activeConnections.filter((ws) => {
+      return ws.data.wsId !== options.remove!.data.wsId;
+    });
   }
+
   const message: ConnectionsMessageType = {
     type: messageTypes.CONNECTIONS_UPDATE,
     content: {
-      connectionIds: connectionIds,
+      connectionIds: activeConnections.map((ws) => ws.data.wsId),
     },
   };
-  server.publish(topics.gameRoom, JSON.stringify(message));
 
+  server.publish(topics.gameRoom, JSON.stringify(message));
   console.log(`WebSocket connection pool ${options?.add ? 'add' : 'remove'} update sent`);
 }
 
-export const setRoutes = (server: Bun.Server, app: Hono, settings: Record<string, any>) => {
+export const setRoutes = (server: Bun.Server, app: Hono, settings: ServerSettings) => {
   app.get(
     '/chat',
     (c) => {
@@ -70,17 +81,27 @@ export const setRoutes = (server: Bun.Server, app: Hono, settings: Record<string
     .post(
       '/chat',
       vValidator('json', ChatMessageSchema, (result, c) => {
-        if (!result.success) {
-          return c.json({ ok: false }, 400);
+        if (result.success) {
+          const authHeader = c.req.header('authorization')
+          dir({ authHeader })
+          if (validateAuthHeader(authHeader)) {
+            const token = authHeader!.split(' ').pop()
+            dir({ token })
+            if (verifyWsIdToken(token!, settings.SECRET_KEY)) {
+              console.log({ authenticated: true })
+              return undefined
+            }
+          }
         }
+        return c.json({ ok: false }, 400);
       }),
       async (c) => {
-        const param = c.req.valid('json');
+        const params = c.req.valid('json');
 
         const message: ChatMessageType = {
           type: messageTypes.CHAT_UPDATE,
           content: {
-            ...param,
+            ...params,
           },
         };
 
@@ -99,7 +120,10 @@ export const setRoutes = (server: Bun.Server, app: Hono, settings: Record<string
           const rawWs = ws.raw!;
           // Assign a unique ID to this connection
           const wsId = randomUUID() as string;
-          rawWs.data.wsId = wsId;
+          const token = createWsIdToken(wsId, settings.SECRET_KEY)
+          //
+          rawWs.data.wsId = wsId
+          rawWs.data.token = token
 
           // Update subscriptions
           rawWs.subscribe(topics.gameRoom);
@@ -109,17 +133,17 @@ export const setRoutes = (server: Bun.Server, app: Hono, settings: Record<string
             type: messageTypes.CONNECTED,
             content: {
               userId: wsId,
+              token: token
             },
           };
           ws.send(JSON.stringify(connectedMessage));
           console.log(`WebSocket ${rawWs.data.wsId} opened and subscribed to topics`);
 
           // Update connectionIds
-          updateConnectionPool(server, { add: wsId })
+          updateActiveConnections(server, { add: rawWs })
         },
         onClose(_, ws) {
           const rawWs = ws.raw!;
-          const wsId = rawWs.data.wsId;
 
           // Update subscriptions
           rawWs.unsubscribe(topics.gameRoom);
@@ -129,7 +153,7 @@ export const setRoutes = (server: Bun.Server, app: Hono, settings: Record<string
           );
 
           // Update connectionIds
-          updateConnectionPool(server, { remove: wsId })
+          updateActiveConnections(server, { remove: rawWs })
         },
       }
     })
