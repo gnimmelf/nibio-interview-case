@@ -20,8 +20,8 @@ const topics = {
 /**
  * Registries
  */
-const chatHistory: ChatMessage[] = [];
-const connectionIds: string[] = []
+let chatHistory: ChatMessage[] = [];
+let connectionIds: string[] = []
 
 interface WsData {
   wsId: string;
@@ -78,7 +78,7 @@ export const setRoutes = (server: Bun.Server, app: Hono) => {
 
           const message: ConnectedMessageType = {
             type: messageTypes.CONNECTED,
-            content: { id: wsId },
+            content: { userId: wsId },
           };
           ws.send(JSON.stringify(message));
 
@@ -86,8 +86,13 @@ export const setRoutes = (server: Bun.Server, app: Hono) => {
         },
         onClose(_, ws) {
           const rawWs = ws.raw!;
+          const wsId = rawWs.data.wsId;
           rawWs.unsubscribe(topics.chatRoom);
           rawWs.subscribe(topics.playerMove);
+
+          // TODO! Make a better solution for the registries
+          chatHistory = chatHistory.filter(({ userId }) => userId != wsId);
+
           console.log(
             `WebSocket ${rawWs.data?.wsId} closed and unsubscribed from topics`
           );

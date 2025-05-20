@@ -3,20 +3,22 @@ import * as v from "valibot";
 import { css } from "styled-system/css";
 
 import { messageTypes } from "../../shared/constants";
-import {
-  ChatMessage,
-  ChatMessageSchema,
-  Message,
-} from "../../shared/types";
+import { ChatMessage, ChatMessageSchema, Message } from "../../shared/types";
 import { Chat } from "./Chat";
 
 const styles = {
   splitGridH: css({
     display: "grid",
-    gridTemplateColumns: "1fr auto",
+    gridTemplateColumns: {
+      base: "1fr",       // Stack vertically on base (mobile)
+      sm: "1fr auto",    // Horizontal split on sm and up
+    },
     height: "full",
     "& > :last-child": {
-      width: "sm",
+      width: {
+        base: "full",    // Full width on small screens
+        sm: "sm",        // Fixed width on larger screens
+      },
       overflowY: "auto",
     },
     "& > *": {
@@ -76,7 +78,7 @@ export const GoGame: React.FC<{}> = ({}) => {
             // TODO! Update player move
             break;
           case messageTypes.CONNECTED:
-            setUserId(message.content.id)
+            setUserId(message.content.userId);
             break;
           default:
             console.error("Unknown data:", message);
@@ -117,12 +119,15 @@ export const GoGame: React.FC<{}> = ({}) => {
   };
 
   return (
-    <section>
-      <h2>User id: {userId}</h2>
+    <section className={css({ height: "full" })}>
       <div className={styles.splitGridH}>
-        <div>Board</div>
+        <div>Board - User id: {userId}</div>
         <div>
-          <Chat userId={userId} messages={chatMessages} postMessage={postChatMessage} />
+          <Chat
+            userId={userId}
+            messages={chatMessages}
+            postMessage={postChatMessage}
+          />
         </div>
       </div>
     </section>

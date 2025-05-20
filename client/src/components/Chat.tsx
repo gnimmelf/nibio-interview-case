@@ -1,20 +1,30 @@
-import React, {
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { css } from "styled-system/css";
+import React, { ChangeEvent, FormEvent, useState } from "react";
+import { css, cx } from "styled-system/css";
 import { Input } from "./Input";
 import { Button } from "./Button";
 
 import { ChatMessage } from "../../shared/types";
+import { ChatBubble } from "./ChatBubble";
 
 const styles = {
-  container: css({
-    padding: "{2}",
+  splitGridV: css({
+    display: "grid",
+    gridTemplateRows: "1fr auto",
+    height: "full",
+    "& > :last-child": {
+      width: "sm",
+      overflowY: "auto",
+    },
+    "& > *": {
+      minHeight: 0,
+      height: "full",
+    },
   }),
+  chatContainer: css({
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'end'
+  })
 };
 
 export const Chat: React.FC<{
@@ -24,7 +34,7 @@ export const Chat: React.FC<{
 }> = ({ userId, messages, postMessage }) => {
   const initialValues: ChatMessage = {
     userId,
-    text: "Test message"
+    text: "Test message",
   };
 
   const [formValues, setFormValues] = useState<ChatMessage>(initialValues);
@@ -41,8 +51,8 @@ export const Chat: React.FC<{
     e.preventDefault();
     const success = await postMessage({
       ...formValues,
-      userId
-  });
+      userId,
+    });
     if (success) {
       // Reset input
       setFormValues(initialValues);
@@ -50,8 +60,14 @@ export const Chat: React.FC<{
   };
 
   return (
-    <section className={styles.container}>
-      {JSON.stringify(messages)}
+    <section className={styles.splitGridV}>
+      <div class={styles.chatContainer}>
+        {messages.map((message) => (
+          <div key={message.userId} data-user-id={message.userId}>
+            <ChatBubble text={message.text} isFromMe={message.userId == userId} />
+          </div>
+        ))}
+      </div>
       <form
         method="post"
         onSubmit={handleSubmit}
