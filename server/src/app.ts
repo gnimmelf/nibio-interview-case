@@ -10,7 +10,8 @@ import {
   type ChatFormValues,
   type ConnectedMessageType,
   ChatMessageSchema,
-  type ConnectionsMessageType
+  type ConnectionsMessageType,
+  type ChatMessage
 } from '../shared/types';
 import { messageTypes } from '../shared/constants';
 import type { ServerSettings } from './main';
@@ -35,7 +36,7 @@ export { websocket };
 /**
  * Registries
  */
-let chatHistory: ChatFormValues[] = [];
+let chatHistory: ChatMessage[] = [];
 let activeConnections: WsInstance[] = []
 
 /**
@@ -56,9 +57,13 @@ function updateActiveConnections(server: Bun.Server, options: {
   }
 
   if (options?.remove) {
+    const removedWsId = options.remove!.data.wsId
+    // Remove connection
     activeConnections = activeConnections.filter((ws) => {
-      return ws.data.wsId !== options.remove!.data.wsId;
+      return ws.data.wsId !== removedWsId;
     });
+    // Clean up chat history
+    chatHistory = chatHistory.filter(({ userId }) => userId != removedWsId)
   }
 
   const message: ConnectionsMessageType = {
