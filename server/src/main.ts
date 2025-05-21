@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 
-import { setRoutes, websocket } from './routes'
+import { setRoutes, websocket } from './app'
 
 dotenv.config({ path: '../.env' })
 

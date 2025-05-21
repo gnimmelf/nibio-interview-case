@@ -3,8 +3,10 @@ import { css, cx } from "styled-system/css";
 import { Input } from "./Input";
 import { Button } from "./Button";
 
-import { ChatMessage } from "../../shared/types";
+import { ChatFormValues } from "../../shared/types";
 import { ChatBubble } from "./ChatBubble";
+import { useGame } from "./GameProvider";
+import { getPlayerInfo } from "~/lib/utils";
 
 const styles = {
   splitGridV: css({
@@ -21,23 +23,22 @@ const styles = {
     },
   }),
   chatContainer: css({
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'end'
-  })
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "end",
+  }),
 };
 
 export const Chat: React.FC<{
-  userId: string;
-  messages: ChatMessage[];
-  postMessage: (messageData: ChatMessage) => Promise<boolean>;
-}> = ({ userId, messages, postMessage }) => {
-  const initialValues: ChatMessage = {
-    userId,
+  postMessage: (messageData: ChatFormValues) => Promise<boolean>;
+}> = ({ postMessage }) => {
+  const { connectionIds, authData, connectionData, chatMessages } = useGame();
+
+  const initialValues: ChatFormValues = {
     text: "Test message",
   };
 
-  const [formValues, setFormValues] = useState<ChatMessage>(initialValues);
+  const [formValues, setFormValues] = useState<ChatFormValues>(initialValues);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -49,37 +50,45 @@ export const Chat: React.FC<{
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const success = await postMessage({
-      ...formValues,
-      userId,
-    });
+    const success = await postMessage(formValues);
     if (success) {
       // Reset input
       setFormValues(initialValues);
     }
   };
 
+  const userId = authData?.userId!;
+  const isPlayer = Boolean(connectionData?.isPlayer);
+
   return (
     <section className={styles.splitGridV}>
       <div className={styles.chatContainer}>
-        {messages.map((message) => (
-          <div key={message.userId} data-user-id={message.userId}>
-            <ChatBubble text={message.text} isFromMe={message.userId == userId} />
-          </div>
-        ))}
+        {chatMessages.map((message, idx) => {
+          const playerInfo = getPlayerInfo(message.userId, connectionIds)
+          return (playerInfo.isPlayer || playerInfo.isSpectator) && (
+            <div key={idx} data-user-id={message.userId}>
+              <ChatBubble
+                text={message.text}
+                isFromMe={message.userId == userId}
+                {...playerInfo}
+              />
+            </div>
+        )})}
       </div>
-      <form
-        method="post"
-        onSubmit={handleSubmit}
-        className="flex items-center space-x-2"
-      >
-        <Input
-          name="text"
-          value={formValues.text}
-          onChange={handleInputChange}
-        />
-        <Button type="submit">Send</Button>
-      </form>
+      {isPlayer && (
+        <form
+          method="post"
+          onSubmit={handleSubmit}
+          className="flex items-center space-x-2"
+        >
+          <Input
+            name="text"
+            value={formValues.text}
+            onChange={handleInputChange}
+          />
+          <Button type="submit">Send</Button>
+        </form>
+      )}
     </section>
   );
 };

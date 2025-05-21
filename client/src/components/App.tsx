@@ -1,12 +1,15 @@
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "./ThemeProvider";
+import { GameProvider } from "./GameProvider";
 import { Layout } from "./Layout";
 
 function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
-        <Layout />
+        <GameProvider>
+          <Layout />
+        </GameProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

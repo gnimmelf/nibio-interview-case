@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { vValidator } from '@hono/valibot-validator';
 import { createBunWebSocket } from 'hono/bun';
 import type { ServerWebSocket } from 'bun';
@@ -7,13 +7,13 @@ import type { ServerWebSocket } from 'bun';
 import { createWsIdToken, dir, validateAuthHeader, verifyWsIdToken } from './utils';
 import {
   type ChatMessageType,
-  type ChatMessage,
+  type ChatFormValues,
   type ConnectedMessageType,
   ChatMessageSchema,
   type ConnectionsMessageType
 } from '../shared/types';
 import { messageTypes } from '../shared/constants';
-import type { ServerSettings } from '.';
+import type { ServerSettings } from './main';
 
 const topics = {
   gameRoom: 'game-room',
@@ -35,7 +35,7 @@ export { websocket };
 /**
  * Registries
  */
-let chatHistory: ChatMessage[] = [];
+let chatHistory: ChatFormValues[] = [];
 let activeConnections: WsInstance[] = []
 
 /**
@@ -69,7 +69,7 @@ function updateActiveConnections(server: Bun.Server, options: {
   };
 
   server.publish(topics.gameRoom, JSON.stringify(message));
-  console.log(`WebSocket connection pool ${options?.add ? 'add' : 'remove'} update sent`);
+  console.log(`WebSocket active connections ${options?.add ? 'add' : 'remove'} update sent`);
 }
 
 export const setRoutes = (server: Bun.Server, app: Hono, settings: ServerSettings) => {
@@ -80,15 +80,16 @@ export const setRoutes = (server: Bun.Server, app: Hono, settings: ServerSetting
     })
     .post(
       '/chat',
-      vValidator('json', ChatMessageSchema, (result, c) => {
+      vValidator('json', ChatMessageSchema, (result, c: Context<{ Variables: { wsId: string } }>) => {
         if (result.success) {
           const authHeader = c.req.header('authorization')
-          dir({ authHeader })
           if (validateAuthHeader(authHeader)) {
             const token = authHeader!.split(' ').pop()
-            dir({ token })
-            if (verifyWsIdToken(token!, settings.SECRET_KEY)) {
-              console.log({ authenticated: true })
+            const wsId = verifyWsIdToken(token!, settings.SECRET_KEY)
+            const ws = activeConnections.find((ws) => wsId == ws.data.wsId)
+            if (ws && [0, 1].includes(activeConnections.indexOf(ws))) {
+              // Is player and allowed to chat
+              c.set('wsId', wsId!);
               return undefined
             }
           }
@@ -97,11 +98,13 @@ export const setRoutes = (server: Bun.Server, app: Hono, settings: ServerSetting
       }),
       async (c) => {
         const params = c.req.valid('json');
+        const wsId = c.get('wsId');
 
         const message: ChatMessageType = {
           type: messageTypes.CHAT_UPDATE,
           content: {
             ...params,
+            userId: wsId
           },
         };
 
