@@ -11,7 +11,6 @@ export function getPlayerInfo(userId: string, connectionIds: string[]) {
     isSpectator: false
   }
 
-  console.log({ idx })
   if (idx > 1) {
     data.title = `Spectator ${idx - 1}`
     data.isSpectator = true

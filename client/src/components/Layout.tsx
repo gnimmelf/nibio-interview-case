@@ -1,7 +1,7 @@
 import { css, cx } from "styled-system/css";
 import { flex } from "styled-system/patterns";
 import { MenuBar } from "./MenuBar";
-import { GoGame } from "./GoGame";
+import { GameClient } from "./GameClient";
 
 const styles = {
   page: cx(
@@ -30,7 +30,7 @@ export const Layout: React.FC<{}> = ({}) => {
         <MenuBar />
       </div>
       <div>
-        <GoGame />
+        <GameClient />
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import {
   ChatFormValues,
   ChatMessageSchema,
   MoveFormValues,
-  MoveMessageSchema
+  MoveMessageSchema,
 } from "../../shared/types";
 import { Chat } from "./Chat";
 import { useGame } from "./GameProvider";
@@ -13,7 +13,7 @@ import { config } from "../constants";
 import { GoBoard } from "./GoBoard";
 
 const styles = {
-  splitGridH: css({
+  container: css({
     display: "grid",
     gridTemplateColumns: {
       base: "1fr", // Stack vertically on base (mobile)
@@ -32,9 +32,18 @@ const styles = {
       height: "full",
     },
   }),
+  gameClient: css({
+    display: "flex",
+    flexDirection: "column",
+  }),
+  gameInfo: css({
+    paddingX: '{2}',
+    display: 'flex',
+    gap: '{2}',
+  })
 };
 
-export const GoGame: React.FC<{}> = ({}) => {
+export const GameClient: React.FC<{}> = ({}) => {
   const { authData, connectionData } = useGame();
 
   const postPlayerMove = async (moveValues: MoveFormValues) => {
@@ -42,7 +51,6 @@ export const GoGame: React.FC<{}> = ({}) => {
       const validatedValues = v.parse(ChatMessageSchema, moveValues);
 
       // TBD
-
     } catch (error) {
       console.error("Error:", error);
       return false;
@@ -72,19 +80,19 @@ export const GoGame: React.FC<{}> = ({}) => {
     return true;
   };
 
+  const {connectionCount}=connectionData || {}
+
   return (
-    <section className={css({ height: "full" })}>
-      <div className={styles.splitGridH}>
-        <div>
-          <div>
-            Board ({connectionData?.connectionCount} connections) - You are{" "}
-            {connectionData?.title}
-          </div>
-          {/* <GoBoard /> */}
+    <section className={styles.container}>
+      <div className={styles.gameClient}>
+        <div className={styles.gameInfo}>
+          <span>You are{" "} {connectionData?.title}</span>
+          <span>Connection{connectionCount ? 's' : ''}: {connectionCount}</span>
         </div>
-        <div>
-          <Chat postMessage={postChatMessage} />
-        </div>
+        <GoBoard />
+      </div>
+      <div>
+        <Chat postMessage={postChatMessage} />
       </div>
     </section>
   );
