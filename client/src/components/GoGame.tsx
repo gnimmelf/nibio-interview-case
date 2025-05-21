@@ -1,10 +1,16 @@
 import * as v from "valibot";
 import { css } from "styled-system/css";
 
-import { ChatFormValues, ChatMessageSchema } from "../../shared/types";
+import {
+  ChatFormValues,
+  ChatMessageSchema,
+  MoveFormValues,
+  MoveMessageSchema
+} from "../../shared/types";
 import { Chat } from "./Chat";
 import { useGame } from "./GameProvider";
 import { config } from "../constants";
+import { GoBoard } from "./GoBoard";
 
 const styles = {
   splitGridH: css({
@@ -29,7 +35,20 @@ const styles = {
 };
 
 export const GoGame: React.FC<{}> = ({}) => {
-  const { authData, connectionData, chatMessages } = useGame();
+  const { authData, connectionData } = useGame();
+
+  const postPlayerMove = async (moveValues: MoveFormValues) => {
+    try {
+      const validatedValues = v.parse(ChatMessageSchema, moveValues);
+
+      // TBD
+
+    } catch (error) {
+      console.error("Error:", error);
+      return false;
+    }
+    return true;
+  };
 
   const postChatMessage = async (messageValues: ChatFormValues) => {
     try {
@@ -61,6 +80,7 @@ export const GoGame: React.FC<{}> = ({}) => {
             Board ({connectionData?.connectionCount} connections) - You are{" "}
             {connectionData?.title}
           </div>
+          {/* <GoBoard /> */}
         </div>
         <div>
           <Chat postMessage={postChatMessage} />

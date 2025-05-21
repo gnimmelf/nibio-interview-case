@@ -27,6 +27,12 @@ const styles = {
     flexDirection: "column",
     justifyContent: "end",
   }),
+  chatForm: css({
+    display: "flex",
+    "&>*": {
+      flexGrow: '1'
+    },
+  }),
 };
 
 export const Chat: React.FC<{
@@ -64,23 +70,22 @@ export const Chat: React.FC<{
     <section className={styles.splitGridV}>
       <div className={styles.chatContainer}>
         {chatMessages.map((message, idx) => {
-          const playerInfo = getPlayerInfo(message.userId, connectionIds)
-          return (playerInfo.isPlayer || playerInfo.isSpectator) && (
-            <div key={idx} data-user-id={message.userId}>
-              <ChatBubble
-                text={message.text}
-                isFromMe={message.userId == userId}
-                {...playerInfo}
-              />
-            </div>
-        )})}
+          const playerInfo = getPlayerInfo(message.userId, connectionIds);
+          return (
+            (playerInfo.isPlayer || playerInfo.isSpectator) && (
+              <div key={idx} data-user-id={message.userId}>
+                <ChatBubble
+                  text={message.text}
+                  isFromMe={message.userId == userId}
+                  {...playerInfo}
+                />
+              </div>
+            )
+          );
+        })}
       </div>
       {isPlayer && (
-        <form
-          method="post"
-          onSubmit={handleSubmit}
-          className="flex items-center space-x-2"
-        >
+        <form method="post" onSubmit={handleSubmit} className={styles.chatForm}>
           <Input
             name="text"
             value={formValues.text}

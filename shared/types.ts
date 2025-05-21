@@ -1,11 +1,11 @@
 import * as v from 'valibot';
 import { messageTypes } from './constants';
 
+
+// Chat
 export const ChatMessageSchema = v.object({
   text: v.pipe(v.string(), v.trim(), v.minLength(1)),
 });
-
-// Chat
 export type ChatFormValues = v.InferInput<typeof ChatMessageSchema>;
 export type ChatMessage = ChatFormValues & {
   userId: string
@@ -18,10 +18,13 @@ export type ConnectedMessage = {
 }
 
 // Move
-export type MoveMessage = {
+export const MoveMessageSchema = v.object({
+  x: v.pipe(v.number()),
+  y: v.pipe(v.number())
+});
+export type MoveFormValues = v.InferInput<typeof MoveMessageSchema>;
+export type MoveMessage = MoveFormValues & {
   userId: string
-  x: number
-  y: number
 }
 
 // Connection status update
