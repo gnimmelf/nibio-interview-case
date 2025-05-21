@@ -34,16 +34,11 @@ export const MenuBar: React.FC<{}> = ({}) => {
     <>
       <Helmet>
         <title>{SITE_TITLE}</title>
-        <meta
-          name="description"
-          content="Beginner friendly page for learning React Helmet."
-        />
       </Helmet>
       <section className={styles.container}>
         <div className={styles.menuBar}>
           <div>
             <h2>{SITE_TITLE} - {theme.currentTheme}</h2>
-
           </div>
           <Icon
             icon={dark}
