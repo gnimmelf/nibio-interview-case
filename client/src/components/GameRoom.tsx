@@ -7,10 +7,11 @@ import {
   MoveFormValues,
   MoveMessageSchema,
 } from "../../shared/types";
-import { Chat } from "./Chat";
-import { useGame } from "./ConnectionProvider";
 import { config } from "../constants";
-import { GameBoard } from "./GameBoard";
+import { useGame } from "./ConnectionProvider";
+import { Chat } from "./Chat";
+import { Game } from "./Game";
+
 
 const styles = {
   container: css({
@@ -37,16 +38,16 @@ const styles = {
     flexDirection: "column",
   }),
   gameInfo: css({
-    paddingX: '{2}',
-    display: 'flex',
-    gap: '{2}',
-  })
+    paddingX: "{2}",
+    display: "flex",
+    gap: "{2}",
+  }),
 };
 
 export const GameRoom: React.FC<{}> = ({}) => {
   const { authData, connectionData } = useGame();
 
-  const postPlayerMove = async (moveValues: MoveFormValues) => {
+  const postBoardMove = async (moveValues: MoveFormValues) => {
     try {
       const validatedValues = v.parse(ChatMessageSchema, moveValues);
 
@@ -80,16 +81,19 @@ export const GameRoom: React.FC<{}> = ({}) => {
     return true;
   };
 
-  const {connectionCount}=connectionData || {}
+  const { connectionCount } = connectionData || {};
 
   return (
     <section className={styles.container}>
       <div className={styles.gameClient}>
         <div className={styles.gameInfo}>
-          <span>You are{" "} {connectionData?.title}</span>
-          <span>Connection{connectionCount ? 's' : ''}: {connectionCount}</span>
+          <span>You are {connectionData?.title}</span>
+          <span>
+            Connection{connectionCount ? "s" : ""}: {connectionCount}
+          </span>
         </div>
-        <GameBoard />
+        <Game postMove={postBoardMove}
+        />
       </div>
       <div>
         <Chat postMessage={postChatMessage} />

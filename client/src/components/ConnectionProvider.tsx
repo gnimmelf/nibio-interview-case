@@ -7,7 +7,6 @@ import {
 } from "react";
 import { messageTypes } from "../../shared/constants";
 import {
-  ChatFormValues,
   ChatMessage,
   ConnectedMessage,
   ConnectionId,
@@ -20,6 +19,7 @@ import { getPlayerInfo } from "~/lib/utils";
 type ConnectionData = {
   title: string;
   isPlayer: boolean;
+  playerNo: number
   connectionCount: number
 };
 interface GameContextType {

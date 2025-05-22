@@ -8,7 +8,8 @@ export function getPlayerInfo(userId: string, connectionIds: string[]) {
   const data = {
     title: '',
     isPlayer: false,
-    isSpectator: false
+    isSpectator: false,
+    playerNo: 0 // 0 - Spectator, 1,2 - Player
   }
 
   if (idx > 1) {
@@ -17,7 +18,8 @@ export function getPlayerInfo(userId: string, connectionIds: string[]) {
   }
   else if (idx > -1) {
     data.title = `Player ${idx + 1}`
-    data.isPlayer = true
+    data.isPlayer = true,
+    data.playerNo = idx + 1
   }
 
   return data

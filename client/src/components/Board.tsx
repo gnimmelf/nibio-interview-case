@@ -1,29 +1,26 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import { css, cx } from "styled-system/css";
-import { useGame } from "./ConnectionProvider";
-import { useBoardState } from "~/stores/board-state";
 // Board imports
-import { Canvas, ThreeEvent } from "@react-three/fiber";
+import { useBoardState } from "~/stores/board-state";
+import { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import { Instances, Instance, OrbitControls, Box } from "@react-three/drei";
+import { Instances, Instance, Box } from "@react-three/drei";
 import * as textures from "../lib/textures";
+import { isNumber } from "~/lib/utils";
 
-const styles = {
-  container: css({
-    w: "full",
-    h: "full",
-  }),
-  canvas: css({
-    w: "full",
-    h: "full",
-  }),
-};
+const styles = {};
 
 const TILE_SIZE = 1;
 const TILE_HEIGHT = 0.5;
 const BOARD_SIZE = 13;
 
-type ActiveTile = {
+const PLAYER_COLORS = {
+  1: "red",
+  2: "black",
+} as const;
+type PlayerColorKey = keyof typeof PLAYER_COLORS;
+
+export type ActiveTile = {
   id: number;
   pos: THREE.Vector2;
 };
@@ -33,6 +30,7 @@ type Vector3Array = [x: number, y: number, z: number];
 interface TileInstanceProps {
   id: number;
   isHovered: boolean;
+  playerNo: number;
   position: [number, number, number];
   onPointerOver?: (event: ThreeEvent<MouseEvent>) => void;
   onPointerOut?: (event: ThreeEvent<MouseEvent>) => void;
@@ -61,29 +59,41 @@ const tiles = (() => {
 const TileInstance: React.FC<TileInstanceProps> = ({
   id,
   isHovered,
+  playerNo,
   position,
   ...props
 }) => {
-  const bottomY = position[1] - TILE_HEIGHT / 2;
-  const scaleY = isHovered ? 1.5 : 1;
+  const hoverProps = {
+    posY: position[1],
+    instance: {
+      color: "white",
+    },
+  };
+
+  if (playerNo > 0 && isHovered) {
+    hoverProps.posY += 0.14;
+    Object.assign(hoverProps.instance, {
+      color: PLAYER_COLORS[playerNo as PlayerColorKey],
+      emisive: PLAYER_COLORS[playerNo as PlayerColorKey],
+      emissiveIntensity: 1,
+    })
+  }
 
   return (
-    <group
-      position={[position[0], bottomY, position[2]]}
-      scale={[1, scaleY, 1]}
-    >
+    <group position={[position[0], hoverProps.posY, position[2]]}>
       <Instance
         {...props}
+        {...hoverProps.instance}
         position={[0, TILE_HEIGHT / 2, 0]}
-        color={isHovered ? "darkgoldenrod" : "white"}
       />
     </group>
   );
 };
 
-const Board: React.FC<{
+export const Board: React.FC<{
+  playerNo: number;
   onTileClick: (arg: ActiveTile) => void;
-}> = memo(({ onTileClick }) => {
+}> = memo(({ playerNo, onTileClick }) => {
   const instancesRef = useRef<THREE.InstancedMesh>(null);
   const { setCanDrag, isDragging } = useBoardState();
 
@@ -116,12 +126,12 @@ const Board: React.FC<{
       >
         <boxGeometry args={[TILE_SIZE, TILE_HEIGHT, TILE_SIZE]} />
         <meshPhysicalMaterial
-          color={"darkorange"}
+          color={"white"}
           roughness={0.2}
           metalness={0.2}
           emissiveMap={tileTexture}
           emissive={"white"}
-          emissiveIntensity={0.5}
+          emissiveIntensity={0.2}
         />
         {tiles.map(({ id, pos }) => (
           <TileInstance
@@ -129,6 +139,7 @@ const Board: React.FC<{
             id={id}
             position={pos}
             isHovered={hovered === id}
+            playerNo={playerNo}
             onPointerOut={(e: ThreeEvent<MouseEvent>) => {
               e.stopPropagation();
               setHovered(null);
@@ -171,83 +182,32 @@ const Board: React.FC<{
           emissiveIntensity={0.05}
         />
       </Box>
-      <Box
-        // No-drag bounding box
-        args={[boxSize[0] + 0.2, boxSize[1]+.1, boxSize[2] + 0.2]}
-        position={[
-          boxPosition[0],
-          boxPosition[1] + boxSize[1] / 2,
-          boxPosition[2],
-        ]}
-        onPointerOver={() => {
-          if (!isDragging) {
-            setCanDrag(false);
-          }
-        }}
-        onPointerOut={() => {
-          setCanDrag(true);
-        }}
-      >
-        <meshStandardMaterial
-        transparent
-        color={"fuchsia"}
-        opacity={0}
-        wireframe={true}
-      />
-      </Box>
+      {playerNo > 0 && (
+        <Box
+          // No-drag bounding box - only for players
+          args={[boxSize[0] + 0.2, boxSize[1] + 0.1, boxSize[2] + 0.2]}
+          position={[
+            boxPosition[0],
+            boxPosition[1] + boxSize[1] / 2,
+            boxPosition[2],
+          ]}
+          onPointerOver={() => {
+            if (!isDragging) {
+              setCanDrag(false);
+            }
+          }}
+          onPointerOut={() => {
+            setCanDrag(true);
+          }}
+        >
+          <meshStandardMaterial
+            transparent
+            color={"fuchsia"}
+            opacity={0}
+            wireframe={true}
+          />
+        </Box>
+      )}
     </>
   );
 });
-
-function CameraControls() {
-  const { canDrag, setDragging } = useBoardState((state) => state);
-  return (
-    <OrbitControls
-      enabled={canDrag}
-      enablePan={false}
-      minDistance={12}
-      maxDistance={20}
-      maxPolarAngle={Math.PI / 2.2}
-      onStart={() => setDragging(true)}
-      onEnd={() => setDragging(false)}
-    />
-  );
-}
-
-export function GameBoard() {
-  const { canDrag } = useBoardState((state) => state);
-  const { authData, connectionData, chatMessages } = useGame();
-
-  const [clickedTile, setClickedTile] = useState<ActiveTile | undefined>();
-
-  useEffect(() => {
-    console.log({ clickedTile });
-  }, [clickedTile]);
-
-  return (
-    <section
-      className={styles.container}
-      style={{ cursor: canDrag ? "move" : "pointer" }}
-    >
-      <Canvas
-        gl={{ antialias: true }}
-        className={styles.canvas}
-        camera={{ position: [2, 10, 12], near: 1, far: 30, fov: 70 }}
-      >
-        <ambientLight intensity={Math.PI / 2} />
-        <spotLight
-          position={[10, 10, 10]}
-          angle={0.15}
-          penumbra={1}
-          decay={0}
-          intensity={Math.PI}
-        />
-        <pointLight position={[10, -10, 10]} decay={2} intensity={Math.PI} />
-
-        <Board onTileClick={setClickedTile} />
-
-        <CameraControls />
-      </Canvas>
-    </section>
-  );
-}
