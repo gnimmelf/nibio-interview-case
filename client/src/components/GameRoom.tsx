@@ -8,9 +8,9 @@ import {
   MoveMessageSchema,
 } from "../../shared/types";
 import { Chat } from "./Chat";
-import { useGame } from "./GameProvider";
+import { useGame } from "./ConnectionProvider";
 import { config } from "../constants";
-import { GoBoard } from "./GoBoard";
+import { GameBoard } from "./GameBoard";
 
 const styles = {
   container: css({
@@ -43,7 +43,7 @@ const styles = {
   })
 };
 
-export const GameClient: React.FC<{}> = ({}) => {
+export const GameRoom: React.FC<{}> = ({}) => {
   const { authData, connectionData } = useGame();
 
   const postPlayerMove = async (moveValues: MoveFormValues) => {
@@ -89,7 +89,7 @@ export const GameClient: React.FC<{}> = ({}) => {
           <span>You are{" "} {connectionData?.title}</span>
           <span>Connection{connectionCount ? 's' : ''}: {connectionCount}</span>
         </div>
-        <GoBoard />
+        <GameBoard />
       </div>
       <div>
         <Chat postMessage={postChatMessage} />

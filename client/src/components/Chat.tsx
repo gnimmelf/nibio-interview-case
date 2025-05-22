@@ -5,7 +5,7 @@ import { Button } from "./Button";
 
 import { ChatFormValues } from "../../shared/types";
 import { ChatBubble } from "./ChatBubble";
-import { useGame } from "./GameProvider";
+import { useGame } from "./ConnectionProvider";
 import { getPlayerInfo } from "~/lib/utils";
 
 const styles = {

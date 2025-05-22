@@ -30,10 +30,10 @@ interface GameContextType {
 }
 
 // Create the theme context
-const GameContext = createContext<GameContextType | undefined>(undefined);
+const ConnectionContext = createContext<GameContextType | undefined>(undefined);
 
 // Theme provider component
-export function GameProvider({ children }: { children: ReactNode }) {
+export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [authData, setAuthData] = useState<ConnectedMessage>();
   const [connectionData, setConnectionData] = useState<ConnectionData>();
   const [connectionIds, setConnectionIds] = useState<ConnectionId[]>([]);
@@ -123,17 +123,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const isLoading = !(authData && connectionData);
 
   return (
-    <GameContext.Provider value={gameData}>
+    <ConnectionContext.Provider value={gameData}>
       {isLoading ? null : children}
-    </GameContext.Provider>
+    </ConnectionContext.Provider>
   );
 }
 
 // Custom hook to use the theme context
 export function useGame(): GameContextType {
-  const context = useContext(GameContext);
+  const context = useContext(ConnectionContext);
   if (!context) {
-    throw new Error("useGame must be used within a GameProvider");
+    throw new Error("useGame must be used within a ConnectionProvider");
   }
   return context;
 }
