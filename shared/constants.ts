@@ -5,3 +5,5 @@ export const messageTypes = {
   CONNECTED: 'CONNECTED',
   CONNECTIONS_UPDATE: 'CONNECTIONS_UPDATE'
 } as const;
+
+export const BOARD_SIZE = 13;

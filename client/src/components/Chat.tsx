@@ -5,7 +5,7 @@ import { Button } from "./Button";
 
 import { ChatFormValues } from "../../shared/types";
 import { ChatBubble } from "./ChatBubble";
-import { useGame } from "./ConnectionProvider";
+import { useConnection } from "./ConnectionProvider";
 import { getPlayerInfo } from "~/lib/utils";
 
 const styles = {
@@ -38,7 +38,7 @@ const styles = {
 export const Chat: React.FC<{
   postMessage: (messageData: ChatFormValues) => Promise<boolean>;
 }> = ({ postMessage }) => {
-  const { connectionIds, authData, connectionData, chatMessages } = useGame();
+  const { connectionIds, authData, connectionInfo, chatMessages } = useConnection();
 
   const initialValues: ChatFormValues = {
     text: "Test message",
@@ -64,7 +64,7 @@ export const Chat: React.FC<{
   };
 
   const userId = authData?.userId!;
-  const isPlayer = Boolean(connectionData?.isPlayer);
+  const isPlayer = Boolean(connectionInfo?.isPlayer);
 
   return (
     <section className={styles.splitGridV}>

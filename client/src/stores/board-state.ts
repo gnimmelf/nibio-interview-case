@@ -1,6 +1,5 @@
 import { create } from "zustand"
 
-
 type Store = {
   isDragging: boolean
   setDragging: (isDragging: boolean) => void

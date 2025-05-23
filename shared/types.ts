@@ -19,8 +19,7 @@ export type ConnectedMessage = {
 
 // Move
 export const PlayerMoveSchema = v.object({
-  x: v.pipe(v.number()),
-  y: v.pipe(v.number())
+  tileId: v.pipe(v.number()),
 });
 export type PlayerMoveFormValues = v.InferInput<typeof PlayerMoveSchema>;
 export type MoveMessage = PlayerMoveFormValues & {
@@ -30,8 +29,8 @@ export type MoveMessage = PlayerMoveFormValues & {
 // Game state
 export type TileState = PlayerMoveFormValues & {playerNo: number}
 export type GameState = {
-  activePlayerNo: string
-  boardState: TileState[]
+  activePlayerNo: number
+  boardState: number[]
 }
 
 // Connection status update

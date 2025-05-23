@@ -1,6 +1,13 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  FormEvent,
+  memo,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { css, cx } from "styled-system/css";
-import { useGame } from "./ConnectionProvider";
+import { useConnection } from "./ConnectionProvider";
 import { PlayerMoveFormValues } from "../../shared/types";
 // Board imports
 import { useBoardState } from "~/stores/board-state";
@@ -37,19 +44,22 @@ function CameraControls() {
 export const Game: React.FC<{
   postMove: (moveValues: PlayerMoveFormValues) => Promise<boolean>;
 }> = ({ postMove }) => {
-  const { canDrag,  } = useBoardState((state) => state);
-  const { authData, connectionData, chatMessages, gameState } = useGame();
+  const { connectionInfo } = useConnection();
+  const { canDrag } = useBoardState((state) => state);
 
   const [clickedTile, setClickedTile] = useState<ActiveTile | undefined>();
 
   useEffect(() => {
-    console.log({ clickedTile });
+    if (clickedTile) {
+      // TODO! Move to `async function handleSubmit` for async handling
+      postMove({ tileId: clickedTile?.id! });
+    }
   }, [clickedTile]);
 
   return (
     <section
       className={styles.container}
-      style={{ cursor: canDrag ? "move" : "pointer" }}
+      style={{ cursor: canDrag ? "move" : connectionInfo?.isActivePlayer ? "pointer" : "not-allowed" }}
     >
       <Canvas
         gl={{ antialias: true }}
@@ -68,7 +78,7 @@ export const Game: React.FC<{
 
         <Board
           onTileClick={setClickedTile}
-          playerNo={connectionData?.playerNo!}
+          playerNo={connectionInfo?.playerNo!}
         />
 
         <CameraControls />

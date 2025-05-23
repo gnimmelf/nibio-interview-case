@@ -8,10 +8,9 @@ import {
   PlayerMoveSchema,
 } from "../../shared/types";
 import { config } from "../constants";
-import { useGame } from "./ConnectionProvider";
+import { useConnection } from "./ConnectionProvider";
 import { Chat } from "./Chat";
 import { Game } from "./Game";
-
 
 const styles = {
   container: css({
@@ -40,18 +39,31 @@ const styles = {
   gameInfo: css({
     paddingX: "{2}",
     display: "flex",
+    justifyContent: "space-evenly",
     gap: "{2}",
   }),
 };
 
+/**
+ * Component housing chat and game
+ */
 export const GameRoom: React.FC<{}> = ({}) => {
-  const { authData, connectionData } = useGame();
+  const { authData, connectionInfo } = useConnection();
 
   const postPlayerMove = async (moveValues: PlayerMoveFormValues) => {
     try {
-      const validatedValues = v.parse(ChatMessageSchema, moveValues);
-
-      // TBD
+      const validatedValues = v.parse(PlayerMoveSchema, moveValues);
+      const response = await fetch(`${config.BACKEND_URL}/move`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData!.token}`,
+        },
+        method: "POST",
+        body: JSON.stringify(validatedValues),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
     } catch (error) {
       console.error("Error:", error);
       return false;
@@ -62,7 +74,6 @@ export const GameRoom: React.FC<{}> = ({}) => {
   const postChatMessage = async (messageValues: ChatFormValues) => {
     try {
       const validatedValues = v.parse(ChatMessageSchema, messageValues);
-
       const response = await fetch(`${config.BACKEND_URL}/chat`, {
         headers: {
           "Content-Type": "application/json",
@@ -81,19 +92,28 @@ export const GameRoom: React.FC<{}> = ({}) => {
     return true;
   };
 
-  const { connectionCount } = connectionData || {};
+  const { connectionCount } = connectionInfo || {};
 
   return (
     <section className={styles.container}>
       <div className={styles.gameClient}>
         <div className={styles.gameInfo}>
-          <span>You are {connectionData?.title}</span>
-          <span>
+          <div>
             Connection{connectionCount ? "s" : ""}: {connectionCount}
+          </div>
+          <span>
+            <span>You are {connectionInfo?.title}</span>
+            {connectionInfo?.isPlayer && (
+              <span>
+                {" - "}
+                {connectionInfo?.isActivePlayer
+                  ? "Your move!"
+                  : "Awaiting your turn..."}
+              </span>
+            )}
           </span>
         </div>
-        <Game postMove={postPlayerMove}
-        />
+        <Game postMove={postPlayerMove} />
       </div>
       <div>
         <Chat postMessage={postChatMessage} />

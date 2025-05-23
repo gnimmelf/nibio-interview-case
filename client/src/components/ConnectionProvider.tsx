@@ -17,16 +17,17 @@ import { config } from "../constants";
 import { getPlayerInfo } from "~/lib/utils";
 
 // Define the theme context type
-type ConnectionData = {
+type ConnectionInfo = {
   title: string;
   isPlayer: boolean;
+  isActivePlayer: boolean
   playerNo: number
   connectionCount: number
 };
 
 interface ConnectionContextType {
   authData?: ConnectedMessage;
-  connectionData?: ConnectionData;
+  connectionInfo?: ConnectionInfo;
   gameState?: GameState
   chatMessages: ChatMessage[];
   connectionIds: string[];
@@ -38,27 +39,39 @@ const ConnectionContext = createContext<ConnectionContextType | undefined>(undef
 // Theme provider component
 export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [authData, setAuthData] = useState<ConnectedMessage>();
-  const [connectionData, setConnectionData] = useState<ConnectionData>();
+  const [connectionInfo, setConnectionInfo] = useState<ConnectionInfo>();
   const [connectionIds, setConnectionIds] = useState<ConnectionId[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [gameState, setGameState] = useState<GameState>();
+
+
+  const fetchChatHistory = async () => {
+    const response = await fetch(`${config.BACKEND_URL}/chat`);
+    if (!response.ok) {
+      console.error("Failed to fetch messages");
+      return;
+    }
+    const chatMessages: ChatMessage[] = await response.json();
+    setChatMessages(chatMessages);
+  };
+
+  const fetchGameState = async () => {
+    const response = await fetch(`${config.BACKEND_URL}/game`);
+    if (!response.ok) {
+      console.error("Failed to fetch messages");
+      return;
+    }
+    const gameState: GameState = await response.json();
+    setGameState(gameState)
+  };
 
 
   /**
    * Load messages
    */
   useEffect(() => {
-    const fetchChatHistory = async () => {
-      const response = await fetch(`${config.BACKEND_URL}/chat`);
-      if (!response.ok) {
-        console.error("Failed to fetch messages");
-        return;
-      }
-      const chatMessages: ChatMessage[] = await response.json();
-      setChatMessages(chatMessages);
-    };
-
     fetchChatHistory();
+    fetchGameState();
   }, [authData]);
 
   /**
@@ -108,38 +121,38 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
    * Set derived connection data
    */
   useEffect(() => {
-    setConnectionData((prev) => {
+    setConnectionInfo((prev) => {
       const next = {
         connectionCount: connectionIds.length,
-        ...getPlayerInfo(authData?.userId!, connectionIds)
-      } as ConnectionData
+        ...getPlayerInfo(authData?.userId!, connectionIds, gameState?.activePlayerNo!)
+      } as ConnectionInfo
 
       return next
     });
-  }, [connectionIds]);
+  }, [connectionIds, gameState]);
 
-  const gameData: ConnectionContextType = {
+  const connectionData: ConnectionContextType = {
     authData,
-    connectionData,
+    connectionInfo,
     chatMessages,
     connectionIds,
     gameState
   };
 
-  const isLoading = !(authData && connectionData);
+  const isLoading = !(authData && connectionInfo);
 
   return (
-    <ConnectionContext.Provider value={gameData}>
+    <ConnectionContext.Provider value={connectionData}>
       {isLoading ? null : children}
     </ConnectionContext.Provider>
   );
 }
 
 // Custom hook to use the theme context
-export function useGame(): ConnectionContextType {
+export function useConnection(): ConnectionContextType {
   const context = useContext(ConnectionContext);
   if (!context) {
-    throw new Error("useGame must be used within a ConnectionProvider");
+    throw new Error("useConnection must be used within a ConnectionProvider");
   }
   return context;
 }

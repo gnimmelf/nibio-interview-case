@@ -29,6 +29,7 @@ interface TileInstanceProps {
   id: number;
   isHovered: boolean;
   playerNo: number;
+  playedState: number;
   position: [number, number, number];
   onPointerOver?: (event: ThreeEvent<MouseEvent>) => void;
   onPointerOut?: (event: ThreeEvent<MouseEvent>) => void;
@@ -38,6 +39,7 @@ export const TileInstance: React.FC<TileInstanceProps> = ({
   id,
   isHovered,
   playerNo,
+  playedState,
   position,
   ...props
 }) => {
@@ -48,7 +50,16 @@ export const TileInstance: React.FC<TileInstanceProps> = ({
     posY: position[1],
   };
 
-  if (playerNo > 0 && isHovered) {
+  if (playedState) {
+    // Played
+    Object.assign(hoverProps, {
+      color: PLAYER_COLORS[playedState as PlayerColorKey],
+      emissive: PLAYER_COLORS[playedState as PlayerColorKey],
+      emissiveIntensity: 0.5,
+    });
+  }
+  else if (playerNo > 0 && isHovered) {
+    // Hovered
     Object.assign(hoverProps, {
       posY: position[1] + HOVER_PROPS.offsetPosY,
       color: PLAYER_COLORS[playerNo as PlayerColorKey],

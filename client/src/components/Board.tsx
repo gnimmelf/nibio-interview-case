@@ -6,6 +6,7 @@ import { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { Instances, Box } from "@react-three/drei";
 import * as textures from "../lib/textures";
+import { BOARD_SIZE } from "../../shared/constants";
 
 import {
   TILE_DEFAULT_PROPS,
@@ -13,10 +14,9 @@ import {
   TILE_SIZE,
   TileInstance,
 } from "./TileInstance";
+import { useConnection } from "./ConnectionProvider";
 
 const styles = {};
-
-const BOARD_SIZE = 13;
 
 type Vector3Array = [x: number, y: number, z: number];
 
@@ -50,6 +50,7 @@ export const Board: React.FC<{
 }> = memo(({ playerNo, onTileClick }) => {
   const instancesRef = useRef<THREE.InstancedMesh>(null);
 
+  const { gameState } = useConnection()
   const { setCanDrag, isDragging } = useBoardState();
 
   const [hovered, setHovered] = useState<number | null>(null);
@@ -83,19 +84,20 @@ export const Board: React.FC<{
       >
         <boxGeometry args={[TILE_SIZE, TILE_HEIGHT, TILE_SIZE]} />
         <meshPhysicalMaterial
-          metalness={.2}
+          metalness={0.2}
           color={TILE_DEFAULT_PROPS.color}
           map={tileTexture}
           emissiveMap={tileTexture}
           emissive={TILE_DEFAULT_PROPS.emmisive}
           emissiveIntensity={TILE_DEFAULT_PROPS.emissiveIntensity}
         />
-        {tiles.map(({ id, pos }) => (
+        {gameState && tiles.map(({ id, pos }) => (
           <TileInstance
             key={id}
             id={id}
             position={pos}
             isHovered={hovered === id}
+            playedState={gameState?.boardState[id]}
             playerNo={playerNo}
             onPointerOut={(e: ThreeEvent<MouseEvent>) => {
               e.stopPropagation();

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
 
   const defineEnv = {};
   for (const [key, value] of Object.entries(env)) {
-    defineEnv[`process.env.${key}`] = JSON.stringify(value);
+    defineEnv[`import.meta.env.${key}`] = JSON.stringify(value);
   }
 
   console.log({ mode, defineEnv })
