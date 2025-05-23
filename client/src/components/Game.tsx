@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import { css, cx } from "styled-system/css";
 import { useGame } from "./ConnectionProvider";
-import { MoveFormValues } from "../../shared/types";
+import { PlayerMoveFormValues } from "../../shared/types";
 // Board imports
 import { useBoardState } from "~/stores/board-state";
 import { Canvas } from "@react-three/fiber";
@@ -35,10 +35,10 @@ function CameraControls() {
 }
 
 export const Game: React.FC<{
-  postMove: (moveValues: MoveFormValues) => Promise<boolean>;
+  postMove: (moveValues: PlayerMoveFormValues) => Promise<boolean>;
 }> = ({ postMove }) => {
-  const { canDrag } = useBoardState((state) => state);
-  const { authData, connectionData, chatMessages } = useGame();
+  const { canDrag,  } = useBoardState((state) => state);
+  const { authData, connectionData, chatMessages, gameState } = useGame();
 
   const [clickedTile, setClickedTile] = useState<ActiveTile | undefined>();
 

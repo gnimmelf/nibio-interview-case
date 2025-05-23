@@ -5,14 +5,13 @@ import { createBunWebSocket } from 'hono/bun';
 import type { ServerWebSocket } from 'bun';
 
 import { createWsIdToken, dir, validateAuthHeader, verifyWsIdToken } from './utils';
-import {
-  type ChatMessageType,
-  type ChatFormValues,
-  type ConnectedMessageType,
-  ChatMessageSchema,
-  type ConnectionsMessageType,
-  type ChatMessage
+import type {
+  ChatMessageType,
+  ConnectedMessageType,
+  ConnectionsMessageType,
+  ChatMessage
 } from '../shared/types';
+import { ChatMessageSchema, PlayerMoveSchema } from '../shared/types'
 import { messageTypes } from '../shared/constants';
 import type { ServerSettings } from './main';
 
@@ -77,7 +76,7 @@ function updateActiveConnections(server: Bun.Server, options: {
   console.log(`WebSocket active connections ${options?.add ? 'add' : 'remove'} update sent`);
 }
 
-export const setRoutes = (server: Bun.Server, app: Hono, settings: ServerSettings) => {
+export const createApp = (server: Bun.Server, app: Hono, settings: ServerSettings) => {
   app.get(
     '/chat',
     (c) => {

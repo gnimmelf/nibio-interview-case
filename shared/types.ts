@@ -18,13 +18,20 @@ export type ConnectedMessage = {
 }
 
 // Move
-export const MoveMessageSchema = v.object({
+export const PlayerMoveSchema = v.object({
   x: v.pipe(v.number()),
   y: v.pipe(v.number())
 });
-export type MoveFormValues = v.InferInput<typeof MoveMessageSchema>;
-export type MoveMessage = MoveFormValues & {
+export type PlayerMoveFormValues = v.InferInput<typeof PlayerMoveSchema>;
+export type MoveMessage = PlayerMoveFormValues & {
   userId: string
+}
+
+// Game state
+export type TileState = PlayerMoveFormValues & {playerNo: number}
+export type GameState = {
+  activePlayerNo: string
+  boardState: TileState[]
 }
 
 // Connection status update
@@ -36,14 +43,19 @@ export type ConnectionsMessage = {
 /**
  * Define discriminated union types
  */
-export type ChatMessageType = {
-  type: typeof messageTypes.CHAT_UPDATE;
-  content: ChatMessage;
-};
-
 export type PlayerMoveMessageType = {
   type: typeof messageTypes.PLAYER_MOVE;
   content: MoveMessage;
+};
+
+export type GameStateMessageType  = {
+  type: typeof messageTypes.GAME_UPDATE;
+  content: GameState;
+};
+
+export type ChatMessageType = {
+  type: typeof messageTypes.CHAT_UPDATE;
+  content: ChatMessage;
 };
 
 export type ConnectedMessageType = {
@@ -61,3 +73,4 @@ export type Message =
   | PlayerMoveMessageType
   | ConnectedMessageType
   | ConnectionsMessageType
+  | GameStateMessageType

@@ -4,8 +4,8 @@ import { css } from "styled-system/css";
 import {
   ChatFormValues,
   ChatMessageSchema,
-  MoveFormValues,
-  MoveMessageSchema,
+  PlayerMoveFormValues,
+  PlayerMoveSchema,
 } from "../../shared/types";
 import { config } from "../constants";
 import { useGame } from "./ConnectionProvider";
@@ -47,7 +47,7 @@ const styles = {
 export const GameRoom: React.FC<{}> = ({}) => {
   const { authData, connectionData } = useGame();
 
-  const postBoardMove = async (moveValues: MoveFormValues) => {
+  const postPlayerMove = async (moveValues: PlayerMoveFormValues) => {
     try {
       const validatedValues = v.parse(ChatMessageSchema, moveValues);
 
@@ -92,7 +92,7 @@ export const GameRoom: React.FC<{}> = ({}) => {
             Connection{connectionCount ? "s" : ""}: {connectionCount}
           </span>
         </div>
-        <Game postMove={postBoardMove}
+        <Game postMove={postPlayerMove}
         />
       </div>
       <div>

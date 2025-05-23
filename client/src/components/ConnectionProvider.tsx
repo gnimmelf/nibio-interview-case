@@ -6,10 +6,11 @@ import {
   useEffect,
 } from "react";
 import { messageTypes } from "../../shared/constants";
-import {
+import type {
   ChatMessage,
   ConnectedMessage,
   ConnectionId,
+  GameState,
   Message,
 } from "../../shared/types";
 import { config } from "../constants";
@@ -22,15 +23,17 @@ type ConnectionData = {
   playerNo: number
   connectionCount: number
 };
-interface GameContextType {
+
+interface ConnectionContextType {
   authData?: ConnectedMessage;
   connectionData?: ConnectionData;
+  gameState?: GameState
   chatMessages: ChatMessage[];
   connectionIds: string[];
 }
 
 // Create the theme context
-const ConnectionContext = createContext<GameContextType | undefined>(undefined);
+const ConnectionContext = createContext<ConnectionContextType | undefined>(undefined);
 
 // Theme provider component
 export function ConnectionProvider({ children }: { children: ReactNode }) {
@@ -38,6 +41,8 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [connectionData, setConnectionData] = useState<ConnectionData>();
   const [connectionIds, setConnectionIds] = useState<ConnectionId[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [gameState, setGameState] = useState<GameState>();
+
 
   /**
    * Load messages
@@ -79,8 +84,8 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
           case messageTypes.CHAT_UPDATE:
             setChatMessages((prev) => [...prev, message.content]);
             break;
-          case messageTypes.PLAYER_MOVE:
-            // TODO! Update player move
+          case messageTypes.GAME_UPDATE:
+            setGameState(message.content)
             break;
           default:
             console.error("Unknown data:", message);
@@ -113,11 +118,12 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
     });
   }, [connectionIds]);
 
-  const gameData: GameContextType = {
+  const gameData: ConnectionContextType = {
     authData,
     connectionData,
     chatMessages,
-    connectionIds
+    connectionIds,
+    gameState
   };
 
   const isLoading = !(authData && connectionData);
@@ -130,7 +136,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
 }
 
 // Custom hook to use the theme context
-export function useGame(): GameContextType {
+export function useGame(): ConnectionContextType {
   const context = useContext(ConnectionContext);
   if (!context) {
     throw new Error("useGame must be used within a ConnectionProvider");

@@ -4,38 +4,26 @@ import { css, cx } from "styled-system/css";
 import { useBoardState } from "~/stores/board-state";
 import { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import { Instances, Instance, Box } from "@react-three/drei";
+import { Instances, Box } from "@react-three/drei";
 import * as textures from "../lib/textures";
-import { isNumber } from "~/lib/utils";
+
+import {
+  TILE_DEFAULT_PROPS,
+  TILE_HEIGHT,
+  TILE_SIZE,
+  TileInstance,
+} from "./TileInstance";
 
 const styles = {};
 
-const TILE_SIZE = 1;
-const TILE_HEIGHT = 0.5;
 const BOARD_SIZE = 13;
 
-const PLAYER_COLORS = {
-  1: "red",
-  2: "black",
-} as const;
-type PlayerColorKey = keyof typeof PLAYER_COLORS;
+type Vector3Array = [x: number, y: number, z: number];
 
 export type ActiveTile = {
   id: number;
   pos: THREE.Vector2;
 };
-
-type Vector3Array = [x: number, y: number, z: number];
-
-interface TileInstanceProps {
-  id: number;
-  isHovered: boolean;
-  playerNo: number;
-  position: [number, number, number];
-  onPointerOver?: (event: ThreeEvent<MouseEvent>) => void;
-  onPointerOut?: (event: ThreeEvent<MouseEvent>) => void;
-  onClick?: (event: ThreeEvent<MouseEvent>) => void;
-}
 
 // Precompute an array of { id, position } for all tiles
 const tiles = (() => {
@@ -56,49 +44,17 @@ const tiles = (() => {
   return out;
 })();
 
-const TileInstance: React.FC<TileInstanceProps> = ({
-  id,
-  isHovered,
-  playerNo,
-  position,
-  ...props
-}) => {
-  const hoverProps = {
-    posY: position[1],
-    instance: {
-      color: "white",
-    },
-  };
-
-  if (playerNo > 0 && isHovered) {
-    hoverProps.posY += 0.14;
-    Object.assign(hoverProps.instance, {
-      color: PLAYER_COLORS[playerNo as PlayerColorKey],
-      emisive: PLAYER_COLORS[playerNo as PlayerColorKey],
-      emissiveIntensity: 1,
-    })
-  }
-
-  return (
-    <group position={[position[0], hoverProps.posY, position[2]]}>
-      <Instance
-        {...props}
-        {...hoverProps.instance}
-        position={[0, TILE_HEIGHT / 2, 0]}
-      />
-    </group>
-  );
-};
-
 export const Board: React.FC<{
   playerNo: number;
   onTileClick: (arg: ActiveTile) => void;
 }> = memo(({ playerNo, onTileClick }) => {
   const instancesRef = useRef<THREE.InstancedMesh>(null);
+
   const { setCanDrag, isDragging } = useBoardState();
 
   const [hovered, setHovered] = useState<number | null>(null);
 
+  // Set up bounding box and board box
   const [boxSize, setBoxSize] = useState<Vector3Array>([1, 1, 1]);
   const [boxPosition, setBoxPosition] = useState<Vector3Array>([0, 0, 0]);
   useEffect(() => {
@@ -113,6 +69,7 @@ export const Board: React.FC<{
     }
   }, [instancesRef.current]);
 
+  // Textures
   const tileTexture = useMemo(() => textures.createMarbleTileTexture(), []);
   const frameTexture = useMemo(() => textures.createOakWoodTexture(), []);
 
@@ -126,12 +83,12 @@ export const Board: React.FC<{
       >
         <boxGeometry args={[TILE_SIZE, TILE_HEIGHT, TILE_SIZE]} />
         <meshPhysicalMaterial
-          color={"white"}
-          roughness={0.2}
-          metalness={0.2}
+          metalness={.2}
+          color={TILE_DEFAULT_PROPS.color}
+          map={tileTexture}
           emissiveMap={tileTexture}
-          emissive={"white"}
-          emissiveIntensity={0.2}
+          emissive={TILE_DEFAULT_PROPS.emmisive}
+          emissiveIntensity={TILE_DEFAULT_PROPS.emissiveIntensity}
         />
         {tiles.map(({ id, pos }) => (
           <TileInstance
@@ -165,7 +122,7 @@ export const Board: React.FC<{
       </Instances>
       <Box
         // Board frame
-        args={[boxSize[0] + 0.2, boxSize[1] + 0.2, boxSize[2] + 0.2]}
+        args={[boxSize[0] + 0.2, boxSize[1] + 0.39, boxSize[2] + 0.2]}
         position={[boxPosition[0], boxPosition[1] - 0.2, boxPosition[2]]}
         onPointerOver={(e: ThreeEvent<MouseEvent>) => {
           e.stopPropagation();
