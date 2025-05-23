@@ -1,0 +1,14 @@
+FROM node:20
+WORKDIR /app
+RUN npm install -g pnpm
+COPY package.json pnpm-lock.yaml ./
+COPY panda.config.ts ./
+COPY src/theme ./src/theme
+# Allow esbuild scripts
+RUN echo 'module.exports = { hooks: { readPackage: (pkg) => { if (pkg.name === "esbuild") { pkg.scripts = { ...pkg.scripts, postinstall: pkg.scripts.postinstall || "" }; } return pkg; } } }' > .pnpmfile.cjs
+RUN pnpm install
+COPY . .
+EXPOSE 5173
+ENV NODE_ENV=production
+CMD ["pnpm", "run", "build"]
+CMD ["pnpm", "run", "start"]

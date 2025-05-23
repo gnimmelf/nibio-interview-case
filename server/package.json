@@ -2,6 +2,10 @@
   "name": "server",
   "type": "module",
   "private": true,
+  "scripts": {
+    "dev": "bun --hot src/app.ts ",
+    "start": "bun run src/app.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/ws": "^8.18.1",

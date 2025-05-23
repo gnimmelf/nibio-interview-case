@@ -7,7 +7,7 @@
   "scripts": {
     "prepare": "panda codegen",
     "dev": "vite --no-open",
-    "build": "NODE_ENV=prod panda codegen && vite build",
+    "build": "NODE_ENV=production panda codegen && vite build",
     "start": "vite preview --no-open",
     "test": "vitest"
   },
@@ -15,18 +15,6 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
     ]
   },
   "dependencies": {

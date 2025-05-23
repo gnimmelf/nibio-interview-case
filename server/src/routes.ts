@@ -42,6 +42,7 @@ export { websocket };
 
 /**
  * Registries
+ * TODO! Wrap in classes to encapsulate logic, especially `gameStat` and game rules.
  */
 let chatHistory: ChatMessage[] = [];
 let activeConnections: WsInstance[] = []
@@ -170,6 +171,8 @@ export const setupAppRoutes = (server: Bun.Server, app: Hono, settings: ServerSe
             message: 'Tile occupied'
           }, 400);
         }
+
+        // TODO! Game rules check go here
 
         // Record player move
         gameState.boardState[params.tileId] = playerNo
