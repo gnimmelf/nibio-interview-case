@@ -6,7 +6,6 @@ import type { ServerWebSocket } from 'bun';
 
 import {
   createWsIdToken,
-  dir,
   validateAuthHeader,
   verifyWsIdToken
 } from './utils';
@@ -21,7 +20,7 @@ import type {
 } from '../shared/types';
 import { ChatMessageSchema, PlayerMoveSchema } from '../shared/types'
 import { BOARD_SIZE, messageTypes } from '../shared/constants';
-import type { ServerSettings } from './app';
+import type { EnvVars } from './app';
 
 const topics = {
   gameRoom: 'game-room',
@@ -93,9 +92,9 @@ function updateActiveConnections(server: Bun.Server, options: {
  * Set up app routes
  * @param server Bun server instance
  * @param app Hono app instance
- * @param settings ports and stuff
+ * @param envVars ports and stuff
  */
-export const setupAppRoutes = (server: Bun.Server, app: Hono, settings: ServerSettings) => {
+export const setupAppRoutes = (server: Bun.Server, app: Hono, envVars: EnvVars) => {
 
   const validatePostMessage = (schema: any) => {
     return vValidator('json', schema, (result, c: Context<{ Variables: { wsId: string } }>) => {
@@ -103,7 +102,7 @@ export const setupAppRoutes = (server: Bun.Server, app: Hono, settings: ServerSe
         const authHeader = c.req.header('authorization');
         if (validateAuthHeader(authHeader)) {
           const token = authHeader!.split(' ').pop();
-          const wsId = verifyWsIdToken(token!, settings.SECRET_KEY);
+          const wsId = verifyWsIdToken(token!, envVars.SECRET_KEY);
           const ws = activeConnections.find((ws) => wsId == ws.data.wsId);
           if (ws && [0, 1].includes(activeConnections.indexOf(ws))) {
             c.set('wsId', wsId!);
@@ -198,7 +197,7 @@ export const setupAppRoutes = (server: Bun.Server, app: Hono, settings: ServerSe
           const rawWs = ws.raw!;
           // Assign a unique ID to this connection
           const wsId = randomUUID() as string;
-          const token = createWsIdToken(wsId, settings.SECRET_KEY)
+          const token = createWsIdToken(wsId, envVars.SECRET_KEY)
           //
           rawWs.data.wsId = wsId
           rawWs.data.token = token

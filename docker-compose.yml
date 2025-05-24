@@ -1,24 +1,48 @@
 services:
   webserver:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./dockerfile-server
+      args:
+        # Secret vars
+        SECRET_KEY: ${SECRET_KEY}
+        # Common
+        NODE_ENV: 'production'
+        FRONTEND_HOST: ${FRONTEND_HOST}
+        BACKEND_HOST: ${BACKEND_HOST}
+        FRONTEND_PORT: ${FRONTEND_PORT}
+        BACKEND_PORT: ${BACKEND_PORT}
     ports:
-      - "3001:3001"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     environment:
-      - FRONTEND_URL=http://client:5173
-      - BACKEND_URL=http://webserver:3001
-      - BACKEND_WS_URL=ws://webserver:3001
+      # Secret vars
+      SECRET_KEY: ${SECRET_KEY}
+      # Common
+      NODE_ENV: 'production'
+      FRONTEND_HOST: ${FRONTEND_HOST}
+      BACKEND_HOST: ${BACKEND_HOST}
+      FRONTEND_PORT: ${FRONTEND_PORT}
+      BACKEND_PORT: ${BACKEND_PORT}
+
+
   client:
     build:
-      context: ./client
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./dockerfile-client
+      args:
+        # Common vars
+        NODE_ENV: 'production'
+        FRONTEND_HOST: ${FRONTEND_HOST}
+        BACKEND_HOST: ${BACKEND_HOST}
+        FRONTEND_PORT: ${FRONTEND_PORT}
+        BACKEND_PORT: ${BACKEND_PORT}
     ports:
-      - "5173:5173"
-    volumes:
-      - ./server/shared:/app/shared
-      - ./.env:/.env
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     environment:
-      - FRONTEND_URL=http://client:5173
-      - BACKEND_URL=http://webserver:3001
-      - BACKEND_WS_URL=ws://webserver:3001
+      # Common vars
+      NODE_ENV: 'production'
+      FRONTEND_HOST: ${FRONTEND_HOST}
+      BACKEND_HOST: ${BACKEND_HOST}
+      FRONTEND_PORT: ${FRONTEND_PORT}
+      BACKEND_PORT: ${BACKEND_PORT}
+

@@ -7,7 +7,9 @@ import {
   PlayerMoveFormValues,
   PlayerMoveSchema,
 } from "../../shared/types";
-import { config } from "../constants";
+import {
+  backendUrl
+} from "../constants";
 import { useConnection } from "./ConnectionProvider";
 import { Chat } from "./Chat";
 import { Game } from "./Game";
@@ -53,7 +55,7 @@ export const GameRoom: React.FC<{}> = ({}) => {
   const postPlayerMove = async (moveValues: PlayerMoveFormValues) => {
     try {
       const validatedValues = v.parse(PlayerMoveSchema, moveValues);
-      const response = await fetch(`${config.BACKEND_URL}/move`, {
+      const response = await fetch(`${backendUrl}/move`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authData!.token}`,
@@ -74,7 +76,7 @@ export const GameRoom: React.FC<{}> = ({}) => {
   const postChatMessage = async (messageValues: ChatFormValues) => {
     try {
       const validatedValues = v.parse(ChatMessageSchema, messageValues);
-      const response = await fetch(`${config.BACKEND_URL}/chat`, {
+      const response = await fetch(`${backendUrl}/chat`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authData!.token}`,

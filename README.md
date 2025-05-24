@@ -5,13 +5,20 @@
 Set up `./.env`:
 
 ```
-FRONTEND_URL=http://localhost:5173
-BACKEND_URL=http://localhost:3001
-BACKEND_WS_URL=ws://localhost:3001
+FRONTEND_HOST=http://localhost
+BACKEND_HOST=http://localhost
+FRONTEND_PORT=5173
+BACKEND_PORT=3001
+SECRET_KEY='super-secret-key'
 ```
 
-## Run in containers
+Env vars is propagated through for Client in `vite.config::define`, and Server in `app.ts`.
 
+For containers, env vars are propagated with `docker compose` automatically including the `.env` file, then and propagating it through to dockerfile and container, both during build time and runtime.
+
+## Run in containers (Prod)
+
+Run `docker-compose up` from project root dir.
 
 ## Local install
 
@@ -19,7 +26,7 @@ BACKEND_WS_URL=ws://localhost:3001
 
 Cd into `./server/`, then:
 
-1. [Install `Bun` golbally](https://bun.sh/docs/installation)
+1. [Install `bun` golbally](https://bun.sh/docs/installation)
 
 2. Install dependencies: `bun install`
 
@@ -57,9 +64,9 @@ Decided to start with a Chat client.
 
 ***Codebase**
 
-For backend tech I wanted to use Bun and Hono; Bun because I like it for smaller projects due to it's leaner, often friendlier APIs, and Hono because I allready have tried out Elysia. Hono is also the wide variety of runtime enironments it can be deployed to, and it's lightwight footprint. I found a [Meduim article](https://dev.to/yutakusuno/hono-simple-messaging-app-using-bun-and-websocket-mnk) that I used as a staring point. The structure of the messaging system is taken from here.
+For backend tech I wanted to use Bun and Hono; Bun because I like it for smaller projects due to it's leaner, often friendlier APIs, and Hono because I allready have tried out Elysia. For Hono it is also the wide variety of runtime enironments it can be deployed to, and it's lightwight footprint. I found a [Meduim article](https://dev.to/yutakusuno/hono-simple-messaging-app-using-bun-and-websocket-mnk) that I used as a staring point. The structure of the messaging system is taken from here.
 
-The frontend I based off another recent interview case I had with React, Vite, TS and Panda CSS as design system.
+The frontend I based off another recent interview case I had using React, Vite, TS and Panda-CSS as design system.
 
 I opted to split the code base into 3 parts, `client`, `server`, and a `shared` folder symlinked into both `client` and `server` for common type defs and constants. Both FE and BE read the same `.env` file in first common ancestor folder.
 

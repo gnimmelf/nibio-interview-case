@@ -1,0 +1,10 @@
+FROM oven/bun:latest
+WORKDIR /app
+
+# First copy in all client files, respects .dockerignore
+COPY ./server .
+# Copy shared folder to overwrite any symlink of same name
+COPY shared shared
+RUN bun install
+EXPOSE 3001
+CMD ["bun", "src/app.ts"]

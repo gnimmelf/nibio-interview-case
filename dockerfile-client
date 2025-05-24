@@ -1,0 +1,24 @@
+FROM node:20
+WORKDIR /app
+
+# Declare build args
+ARG NODE_ENV
+ARG FRONTEND_PORT
+ARG FRONTEND_HOST
+ARG BACKEND_HOST
+ARG BACKEND_PORT
+
+# Install pnpm
+RUN npm install -g pnpm
+# First copy in all client files, respects .dockerignore
+COPY ./client .
+# Copy shared folder, first remove symlink of same name
+# - Rollup complains otherwise
+RUN rm -rf /app/shared
+COPY shared shared
+# Allow esbuild scripts
+RUN echo 'module.exports = { hooks: { readPackage: (pkg) => { if (pkg.name === "esbuild") { pkg.scripts = { ...pkg.scripts, postinstall: pkg.scripts.postinstall || "" }; } return pkg; } } }' > .pnpmfile.cjs
+RUN pnpm install
+EXPOSE 5173
+RUN pnpm run build
+CMD ["pnpm", "run", "start"]

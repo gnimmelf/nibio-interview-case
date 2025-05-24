@@ -5,7 +5,9 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { messageTypes } from "../../shared/constants";
+import {
+  messageTypes,
+} from "../../shared/constants";
 import type {
   ChatMessage,
   ConnectedMessage,
@@ -13,8 +15,8 @@ import type {
   GameState,
   Message,
 } from "../../shared/types";
-import { config } from "../constants";
 import { getPlayerInfo } from "~/lib/utils";
+import { backendUrl } from "~/constants";
 
 // Define the theme context type
 type ConnectionInfo = {
@@ -32,7 +34,6 @@ interface ConnectionContextType {
   chatMessages: ChatMessage[];
   connectionIds: string[];
 }
-
 // Create the theme context
 const ConnectionContext = createContext<ConnectionContextType | undefined>(undefined);
 
@@ -46,7 +47,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
 
 
   const fetchChatHistory = async () => {
-    const response = await fetch(`${config.BACKEND_URL}/chat`);
+    const response = await fetch(`${backendUrl}/chat`);
     if (!response.ok) {
       console.error("Failed to fetch messages");
       return;
@@ -56,7 +57,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   };
 
   const fetchGameState = async () => {
-    const response = await fetch(`${config.BACKEND_URL}/game`);
+    const response = await fetch(`${backendUrl}/game`);
     if (!response.ok) {
       console.error("Failed to fetch messages");
       return;
@@ -78,7 +79,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
    * Connect Websocket
    */
   useEffect(() => {
-    const socket = new WebSocket(`${config.BACKEND_WS_URL}/ws`);
+    const socket = new WebSocket(`${backendUrl}/ws`);
 
     socket.onopen = (event) => {
       console.log("WebSocket client opened", event);
