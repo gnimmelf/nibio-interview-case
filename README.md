@@ -37,7 +37,10 @@ In `./server/`:
 
 In `./client/`:
 
-1. Install deps: `pnpm i`
+1. Install `pnpm` globally:
+  - Using npm: `npm install -g pnpm`
+  - Alternatives: https://pnpm.io/installation
+2. Install deps: `pnpm i`
 2. Run client:
    - Dev: `pnpm run dev`
    - Prod: `pnpm run start`
