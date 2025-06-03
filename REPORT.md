@@ -4,7 +4,7 @@
 
 No agentic AI was used in the development of this codebase 🐰👍
 
-Non-premium ChatGPT and Grok have been consultet with extensisvely to discuss tech choices, and to provide code snippet and suggestions. - This especially for containerization and 3d board.
+Non-premium ChatGPT and Grok have been consultet with extensisvely to discuss tech choices, and to provide code snippet and suggestions. - This especially for containerization and 3D board.
 
 ## Architecture 🏛️
 
@@ -16,22 +16,27 @@ Codebase is spit into three `client`, `server` and `shared`. No workspace soluti
 
 **Frontend**: Built on a prior React, Vite, TS, Panda-CSS case.
 
-Split codebase into `client`, `server`, and `shared` (symlinked for types/constants). Both read `.env` from the first common ancestor folder. This reduces coupling while sharing common elements—may not be final solution but simplifies dev.
+Split codebase into `client`, `server`, and `shared` (symlinked for types/constants). Both `client` and `server` read `.env` from the first common ancestor folder. This reduces coupling while sharing common elements. —This may not be final solution but simplifies spinning up a solution for development.
 
-Npm vs pnpm: Pnpm has a much better DX than npm, but is not the defacto container pkg-manager.
+Npm vs pnpm: Pnpm has a much better DX than npm, but is not the idiomatic container Node pkg-manager.
 
 ### Board 🎲
 
-Options: OS project, CSS/SVG+Markup, or 2D/3D graphics lib. Chose Lume.io, but it lacked types, so switched to R3F (React Three Fiber).
-Familiar with Three.js from map hobby; R3F has solid docs and AI support. AI coded most board logic per my requests.
-Initial approach: instanced tiles with SVG texture for board crosses, raising/coloring on hover. Limited by instanced mesh material constraints (no arbitrary recoloring without custom shaders). AI shader attempts were too complex.
-Settled on white board, black/red player colors.
+For the board, my options were:
 
-**Retrospect**: I should’ve used one board with four instanced meshes (white/black stones, white/black hover markers) for simpler hover/click/state management.
+- use some existing OS project
+- code it using CSS/SVG+Markup
+- use a 2D/3D graphics library
+
+I went with a 3d lib. I initially chose Lume.io, but I was not able to set up adequate type support, so I switched to R3F (React Three Fiber). I am familiar with Three.js from my map hobby; R3F has solid docs and AI support. AI coded most board logic per my detailed requests.
+
+Initial approach: instanced tiles with SVG texture for board crosses, raising/coloring on hover. I found this to be severely limited by instanced mesh material constraints (no arbitrary recoloring without custom shaders). AI shader attempts were too complex. As a solution I settled on white board, black/red player colors.
 
 ## Afterthoughts 🤔
 
+For the board, I should’ve used one board with instanced meshes (white/black stones) for simpler hover/click/state management.
+
 I decided to add containerization instead of implementing more of the go game rules, because containerizarion is more relevant to my skill set, and I want to learn more. 📚🚀
 
-A db (PG) container was asked for, but as the repo is split into two distinct codebases, server and client, I get two containers anyway.
+A db (PG) container was asked for, but as the repo is split into two distinct codebases, server and client, I get two containers anyway. I hope this is satisfactory.
 
