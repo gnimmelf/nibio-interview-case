@@ -50,5 +50,10 @@
     "vite": "^5.4.19",
     "vitest": "^1.6.1",
     "vitest-dom": "^0.1.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "*"
+    ]
   }
 }
