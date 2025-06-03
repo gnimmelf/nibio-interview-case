@@ -17,7 +17,7 @@ COPY ./client .
 RUN rm -rf /app/shared
 COPY shared shared
 # Allow esbuild scripts
-RUN echo 'module.exports = { hooks: { readPackage: (pkg) => { if (pkg.name === "esbuild") { pkg.scripts = { ...pkg.scripts, postinstall: pkg.scripts.postinstall || "" }; } return pkg; } } }' > .pnpmfile.cjs
+RUN echo "onlyBuiltDependencies:\n  - '*'" > pnpm-workspace.yaml
 RUN pnpm install
 EXPOSE 5173
 RUN pnpm run build
