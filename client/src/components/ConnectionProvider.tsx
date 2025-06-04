@@ -18,10 +18,11 @@ import type {
 import { getPlayerInfo } from "~/lib/utils";
 import { backendUrl } from "~/constants";
 
-// Define the theme context type
+// Define the theme context types
 type ConnectionInfo = {
   title: string;
   isPlayer: boolean;
+  isSpectator: boolean;
   isActivePlayer: boolean
   playerNo: number
   connectionCount: number
@@ -44,7 +45,6 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   const [connectionIds, setConnectionIds] = useState<ConnectionId[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [gameState, setGameState] = useState<GameState>();
-
 
   const fetchChatHistory = async () => {
     const response = await fetch(`${backendUrl}/chat`);

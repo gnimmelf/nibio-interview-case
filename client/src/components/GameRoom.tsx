@@ -7,9 +7,7 @@ import {
   PlayerMoveFormValues,
   PlayerMoveSchema,
 } from "../../shared/types";
-import {
-  backendUrl
-} from "../constants";
+import { backendUrl } from "../constants";
 import { useConnection } from "./ConnectionProvider";
 import { Chat } from "./Chat";
 import { Game } from "./Game";

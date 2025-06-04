@@ -70,14 +70,13 @@ export const Chat: React.FC<{
     <section className={styles.splitGridV}>
       <div className={styles.chatContainer}>
         {chatMessages.map((message, idx) => {
-          const playerInfo = getPlayerInfo(message.userId, connectionIds);
           return (
-            (playerInfo.isPlayer || playerInfo.isSpectator) && (
+            (connectionInfo!.isPlayer || connectionInfo!.isSpectator) && (
               <div key={idx} data-user-id={message.userId}>
                 <ChatBubble
                   text={message.text}
                   isFromMe={message.userId == userId}
-                  {...playerInfo}
+                  {...connectionInfo!}
                 />
               </div>
             )

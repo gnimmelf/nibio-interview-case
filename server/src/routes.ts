@@ -41,7 +41,7 @@ export { websocket };
 
 /**
  * Registries
- * TODO! Wrap in classes to encapsulate logic, especially `gameStat` and game rules.
+ * TODO! Wrap in classes to encapsulate logic, especially `gameState` and game rules.
  */
 let chatHistory: ChatMessage[] = [];
 let activeConnections: WsInstance[] = []
